@@ -1,0 +1,45 @@
+name: 🚀 Deploy to Aliyun
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📦 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: 🔨 Build frontend
+      run: |
+        cd frontend
+        npm install
+        npm run build
+
+    - name: 📦 Package for deployment
+      run: |
+        tar -czf poker414.tar.gz server/ frontend/dist/
+
+    - name: 📤 Deploy to Aliyun
+      uses: easingthemes/ssh-deploy@v4
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.ALIYUN_SSH_KEY }}
+        SSH_HOST: ${{ secrets.ALIYUN_HOST }}
+        SSH_PORT: 22
+        SSH_USER: root
+        SOURCE: "poker414.tar.gz"
+        TARGET: "/opt/poker414"
+        SCRIPT_AFTER: |
+          cd /opt/poker414
+          tar -xzf poker414.tar.gz
+          cd server
+          npm install --production
+          pm2 restart poker414 || pm2 start server.js --name poker414
+          pm2 save

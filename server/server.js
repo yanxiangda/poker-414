@@ -356,6 +356,7 @@ io.on('connection', (socket) => {
       checkRoundEnd(room);
     } else {
       room.broadcast('gameUpdate', room.toGameState());
+      checkBotTurn(room); // 检查下一个是否是机器人
     }
   });
 
@@ -400,6 +401,7 @@ io.on('connection', (socket) => {
     } else {
       room.currentPlayer = (playerIndex + 1) % room.players.length;
       room.broadcast('gameUpdate', room.toGameState());
+      checkBotTurn(room); // 检查下一个是否是机器人
     }
   });
 

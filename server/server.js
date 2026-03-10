@@ -418,6 +418,7 @@ io.on('connection', (socket) => {
       }
       
       room.broadcast('gameUpdate', room.toGameState());
+      checkBotTurn(room); // 检查下一个是否是机器人（上轮赢家可能是机器人）
     } else {
       room.currentPlayer = (playerIndex + 1) % room.players.length;
       room.broadcast('gameUpdate', room.toGameState());

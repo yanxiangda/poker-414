@@ -29,11 +29,11 @@ jobs:
 
     - name: 📤 Deploy to Aliyun
       uses: easingthemes/ssh-deploy@v4
-      env:
+      with:
         SSH_PRIVATE_KEY: ${{ secrets.ALIYUN_SSH_KEY }}
-        SSH_HOST: ${{ secrets.ALIYUN_HOST }}
-        SSH_PORT: 22
-        SSH_USER: root
+        REMOTE_HOST: ${{ secrets.ALIYUN_HOST }}
+        REMOTE_PORT: 22
+        REMOTE_USER: root
         SOURCE: "poker414.tar.gz"
         TARGET: "/opt/poker414"
         SCRIPT_AFTER: |

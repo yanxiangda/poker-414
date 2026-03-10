@@ -25,20 +25,8 @@ jobs:
 
     - name: 📦 Package for deployment
       run: |
-        tar -czf poker414.tar.gz server/ frontend/dist/
+        tar -czf poker414.tar.gz server/ frontend/
 
-    - name: 📤 Deploy to Aliyun via SSH
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.ALIYUN_HOST }}
-        username: root
-        key: ${{ secrets.ALIYUN_SSH_KEY }}
-        port: 22
-        script: |
-          cd /opt/poker414
-          rm -rf server frontend.dist
-          echo "Waiting for upload..."
-      
     - name: 📥 Upload files via SCP
       uses: appleboy/scp-action@master
       with:
@@ -60,11 +48,11 @@ jobs:
         script: |
           cd /opt/poker414
           tar -xzf poker414.tar.gz
-          mv server/* .
-          rm -rf server
           cd /opt/poker414/server
           npm install --production
+          pm2 stop poker414 || true
           pm2 delete poker414 || true
+          cd /opt/poker414/server
           pm2 start server.js --name poker414
           pm2 save
           echo "✅ 部署完成！"

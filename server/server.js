@@ -148,7 +148,6 @@ function aiChooseCards(hand, tableCards) {
 }
 
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
-app.use('/dist', express.static(path.join(__dirname, '../frontend/dist')));
 
 io.on('connection', (socket) => {
   console.log('✅ 玩家连接:', socket.id);

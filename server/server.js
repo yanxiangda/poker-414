@@ -131,7 +131,7 @@ function aiChooseCards(hand, tableCards) {
   const prevType = prevAnalysis.type;
   const prevValue = prevAnalysis.value;
   
-  // 尝试同类型管牌
+  // 1. 尝试同类型同张数管牌
   for (let value of Object.keys(groups)) {
     const cards = groups[value];
     if (cards.length !== prevCount) continue;
@@ -141,6 +141,27 @@ function aiChooseCards(hand, tableCards) {
     
     if (analysis.value > prevValue) {
       return cards;
+    }
+  }
+  
+  // 2. 特殊规则：炸可以管对子
+  if (prevType === HAND_TYPE.PAIR) {
+    for (let value of Object.keys(groups)) {
+      const cards = groups[value];
+      if (cards.length >= 3 && value !== 'SJ' && value !== 'BJ') {
+        // 找到最小的炸（3 张）
+        return cards.slice(0, 3);
+      }
+    }
+  }
+  
+  // 3. 特殊规则：炸可以管单张
+  if (prevType === HAND_TYPE.SINGLE) {
+    for (let value of Object.keys(groups)) {
+      const cards = groups[value];
+      if (cards.length >= 3 && value !== 'SJ' && value !== 'BJ') {
+        return cards.slice(0, 3);
+      }
     }
   }
   

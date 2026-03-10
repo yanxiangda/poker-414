@@ -300,17 +300,6 @@ export default function App() {
         
         {screen === 'menu' && (
           <>
-            {/* 调试信息 */}
-            <div style={{ padding: '10px', backgroundColor: '#fff3cd', borderRadius: '6px', marginBottom: '15px', fontSize: '12px' }}>
-              <strong>🔍 调试信息:</strong>
-              <pre style={{ margin: '5px 0', whiteSpace: 'pre-wrap' }}>
-                localStorage: {localStorage.getItem('poker414_lastRoom') || '空'}
-              </pre>
-              <pre style={{ margin: '5px 0', whiteSpace: 'pre-wrap' }}>
-                当前状态：roomId={roomId}, playerName={playerName}, screen={screen}
-              </pre>
-            </div>
-            
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>昵称</label>
               <input

@@ -246,22 +246,26 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
         justifyContent: 'space-between',
         padding: '10px 20px 20px'
       }}>
-        {/* 上方 - 对手区域 */}
+        {/* 上方 - 所有其他玩家（环绕布局） */}
         <div style={{
           display: 'flex',
-          justifyContent: 'space-between',
-          padding: '20px 40px'
+          justifyContent: 'space-around',
+          alignItems: 'center',
+          padding: '10px 20px',
+          flexWrap: 'wrap',
+          gap: '20px'
         }}>
-          {opponents.slice(0, 2).map((player, idx) => {
-            const pIdx = otherPlayers.findIndex(p => p.name === player.name);
+          {otherPlayers.map((player, idx) => {
+            if (idx === playerIndex) return null; // 跳过自己
+            const isTeammate = idx % 2 === myTeam;
             return (
               <PlayerAvatar
                 key={idx}
                 player={player}
                 isYou={false}
-                isCurrent={gameState.currentPlayer === pIdx}
-                team={pIdx % 2}
-                handCount={gameState.hands[pIdx]?.length || 0}
+                isCurrent={gameState.currentPlayer === idx}
+                team={idx % 2}
+                handCount={gameState.hands[idx]?.length || 0}
               />
             );
           })}
@@ -337,24 +341,8 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
           </div>
         </div>
 
-        {/* 下方 - 对家和自己的区域 */}
+        {/* 下方 - 自己的手牌区域 */}
         <div>
-          {teammate && teammateIndex !== playerIndex && (
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              padding: '10px'
-            }}>
-              <PlayerAvatar
-                player={teammate}
-                isYou={false}
-                isCurrent={gameState.currentPlayer === teammateIndex}
-                team={myTeam}
-                handCount={gameState.hands[teammateIndex]?.length || 0}
-              />
-            </div>
-          )}
-          
           <div style={{
             backgroundColor: 'rgba(0,0,0,0.3)',
             borderRadius: '20px 20px 0 0',

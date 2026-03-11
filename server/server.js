@@ -343,14 +343,25 @@ io.on('connection', (socket) => {
 
   // 出牌
   socket.on('playCards', (data) => {
+    console.log('📥 收到出牌请求:', socket.id, data);
     const playerInfo = players.get(socket.id);
-    if (!playerInfo) return;
+    if (!playerInfo) {
+      console.log('❌ 玩家信息不存在');
+      return;
+    }
     
     const room = rooms.get(playerInfo.roomId);
-    if (!room || room.gameState !== 'playing') return;
+    if (!room || room.gameState !== 'playing') {
+      console.log('❌ 房间不存在或游戏未进行中', room?.gameState);
+      return;
+    }
     
     const playerIndex = room.getPlayerIndex(socket.id);
-    if (playerIndex !== room.currentPlayer) return;
+    if (playerIndex !== room.currentPlayer) {
+      console.log('❌ 不是你的回合', playerIndex, room.currentPlayer);
+      socket.emit('error', { message: '还没轮到你出牌！' });
+      return;
+    }
     
     const cards = data.cards;
     if (!cards || cards.length === 0) return;

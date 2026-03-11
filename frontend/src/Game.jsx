@@ -409,8 +409,13 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
               }}>
                 <button 
                   onClick={() => {
-                    socket.emit('playCards', { cards: selectedCards });
-                    setSelectedCards([]);
+                    console.log('出牌:', selectedCards);
+                    if (socket) {
+                      socket.emit('playCards', { cards: selectedCards });
+                      setSelectedCards([]);
+                    } else {
+                      alert('Socket 未连接！');
+                    }
                   }}
                   disabled={selectedCards.length === 0}
                   style={{ 
@@ -428,7 +433,10 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
                   出牌 ({selectedCards.length}张)
                 </button>
                 <button 
-                  onClick={() => socket.emit('pass')}
+                  onClick={() => {
+                    console.log('过');
+                    if (socket) socket.emit('pass');
+                  }}
                   disabled={gameState.lastPlayedCards?.length === 0}
                   style={{ 
                     padding: '14px 40px', 

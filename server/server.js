@@ -501,6 +501,30 @@ function checkRoundEnd(room) {
     room.messages.push(`🏆 ${victory.winner === 0 ? 'A 队' : 'B 队'}胜利！`);
   }
   
+  // 借光规则：出完牌的玩家，同队下一个有手牌的玩家获得先手出牌权
+  let nextPlayer = (playerIndex + 1) % room.players.length;
+  while (room.hands[nextPlayer] && room.hands[nextPlayer].length === 0) {
+    nextPlayer = (nextPlayer + 1) % room.players.length;
+  }
+  
+  // 找到同队下一个有手牌的玩家
+  let teammate = nextPlayer;
+  while (teammate % 2 !== team && room.hands[teammate] && room.hands[teammate].length > 0) {
+    teammate = (teammate + 1) % room.players.length;
+  }
+  
+  // 如果找到同队有手牌的玩家，借光给他
+  if (teammate % 2 === team && room.hands[teammate] && room.hands[teammate].length > 0) {
+    room.currentPlayer = teammate;
+    room.tableCards = [];
+    room.lastPlayedCards = []; // 清空，成为先手
+    room.passCount = 0;
+    room.messages.push(`✨ 借光！${room.players[teammate].name}获得出牌权`);
+  } else {
+    // 没有同队玩家可借光，正常继续
+    room.currentPlayer = nextPlayer;
+  }
+  
   room.broadcast('gameUpdate', room.toGameState());
   
   // 检查下一个是否是机器人出牌

@@ -5,6 +5,74 @@ import Hand from './Hand.jsx';
 import Card from './Card.jsx';
 
 /**
+ * 玩家头像组件
+ */
+function PlayerAvatar({ player, isYou, isCurrent, team, handCount }) {
+  const teamColor = team === 0 ? '#4CAF50' : '#f44336';
+  const bgColor = isCurrent ? '#FFD700' : '#1a4d8f';
+  
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '8px'
+    }}>
+      {/* 头像 */}
+      <div style={{
+        width: 'clamp(60px, 12vw, 80px)',
+        height: 'clamp(60px, 12vw, 80px)',
+        borderRadius: '50%',
+        backgroundColor: bgColor,
+        border: `3px solid ${teamColor}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 'clamp(24px, 5vw, 36px)',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+        position: 'relative'
+      }}>
+        {isYou ? '🧑' : '🤖'}
+        {isCurrent && (
+          <div style={{
+            position: 'absolute',
+            top: '-5px',
+            right: '-5px',
+            width: '24px',
+            height: '24px',
+            backgroundColor: '#FFD700',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '14px',
+            animation: 'pulse 1s infinite'
+          }}>
+            ⏳
+          </div>
+        )}
+      </div>
+      
+      {/* 信息 */}
+      <div style={{
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        borderRadius: '12px',
+        padding: '6px 12px',
+        textAlign: 'center',
+        minWidth: '80px'
+      }}>
+        <div style={{ color: '#fff', fontSize: 'clamp(12px, 2.5vw, 14px)', fontWeight: 'bold' }}>
+          {isYou ? '你' : player?.name || `P${team + 1}`}
+        </div>
+        <div style={{ color: '#ffd700', fontSize: 'clamp(11px, 2vw, 13px)' }}>
+          {handCount}张
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
  * 玩家座位组件 - 响应式定位
  */
 function PlayerSeat({ playerIdx, hand, tableCards, isCurrent, isYou, position = 'hex-bottom', team = 0 }) {
@@ -84,6 +152,19 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
     }
   };
 
+  const isMyTurn = gameState.currentPlayer === playerIndex;
+  const myTeam = playerIndex % 2;
+  const myHand = gameState.hands[playerIndex] || [];
+  
+  // 计算剩余牌统计
+  const remainingCards = {
+    '大王': gameState.hands.flat().filter(c => c.value === 'BJ').length,
+    '小王': gameState.hands.flat().filter(c => c.value === 'SJ').length,
+    '2': gameState.hands.flat().filter(c => c.value === '2').length,
+    'A': gameState.hands.flat().filter(c => c.value === 'A').length,
+    'K': gameState.hands.flat().filter(c => c.value === 'K').length,
+  };
+
   const handlePlayCards = () => {
     if (selectedCards.length === 0) return;
     
@@ -114,73 +195,340 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
     }
   };
 
-  const isMyTurn = gameState.currentPlayer === playerIndex;
-  const myTeam = playerIndex % 2;
-  const myHand = gameState.hands[playerIndex] || [];
-
-  // 获取每个玩家的位置（按顺时针）
-  const playerPositions = ['hex-bottom', 'hex-bottom-right', 'hex-top-right', 'hex-top', 'hex-top-left', 'hex-bottom-left'];
+  // 获取其他玩家
+  const otherPlayers = gameState.players || [];
+  
+  // 找到对家（同队另一个玩家）
+  const teammateIndex = otherPlayers.findIndex((p, i) => i % 2 === myTeam && i !== playerIndex);
+  const teammate = teammateIndex >= 0 ? otherPlayers[teammateIndex] : null;
+  
+  // 找到两个对手
+  const opponents = otherPlayers.filter((p, i) => i % 2 !== myTeam);
 
   return (
     <div style={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      height: '100vh', 
-      padding: 'clamp(8px, 2vw, 15px)',
-      boxSizing: 'border-box',
-      maxWidth: '1200px',
-      margin: '0 auto',
-      gap: 'clamp(6px, 1.5vh, 10px)',
-      backgroundColor: '#f0f0f0'
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      background: 'linear-gradient(180deg, #1a4d8f 0%, #0d2847 50%, #1a4d8f 100%)',
+      position: 'relative',
+      overflow: 'hidden'
     }}>
-      {/* 标题栏 */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
+      {/* 顶部信息栏 */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        flexShrink: 0,
-        flexWrap: 'wrap',
-        gap: '10px'
+        padding: '10px 20px',
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        flexShrink: 0
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <button
-            onClick={handleLeaveGame}
-            style={{
-              padding: 'clamp(6px, 1.5vh, 10px) clamp(12px, 3vw, 20px)',
-              backgroundColor: '#9e9e9e',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: 'clamp(12px, 3vw, 14px)',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}
-          >
-            ← 返回主页
-          </button>
-          <h1 style={{ fontSize: 'clamp(16px, 4vw, 24px)', margin: 0 }}>🃏 东北抛幺 414</h1>
-          <div style={{ 
-            padding: 'clamp(4px, 1vh, 8px) clamp(10px, 3vw, 15px)', 
-            backgroundColor: '#e3f2fd', 
-            color: '#1976D2',
-            borderRadius: '6px',
-            fontSize: 'clamp(12px, 3vw, 14px)',
-            fontWeight: 'bold'
-          }}>
-            🏠 {roomId || '---'}
-          </div>
+        <button
+          onClick={handleLeaveGame}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: 'rgba(255,255,255,0.2)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '20px',
+            fontSize: '14px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          ← 退出
+        </button>
+        
+        {/* 剩余牌统计 */}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {Object.entries(remainingCards).map(([card, count]) => (
+            <div key={card} style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              backgroundColor: 'rgba(255,255,255,0.15)',
+              padding: '4px 10px',
+              borderRadius: '12px'
+            }}>
+              <span style={{ color: '#fff', fontSize: '12px' }}>{card}</span>
+              <span style={{ color: count > 0 ? '#ffd700' : '#666', fontSize: '14px', fontWeight: 'bold' }}>
+                {count}
+              </span>
+            </div>
+          ))}
         </div>
-        <div style={{ display: 'flex', gap: 'clamp(10px, 3vw, 15px)', flexWrap: 'wrap' }}>
-          <div style={{ padding: 'clamp(4px, 1vh, 6px) clamp(10px, 3vw, 15px)', backgroundColor: '#4CAF50', color: 'white', borderRadius: '6px', fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: 'bold' }}>
-            A 队：{gameState.teamScores[0]}
-          </div>
-          <div style={{ padding: 'clamp(4px, 1vh, 6px) clamp(10px, 3vw, 15px)', backgroundColor: '#f44336', color: 'white', borderRadius: '6px', fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: 'bold' }}>
-            B 队：{gameState.teamScores[1]}
-          </div>
+        
+        <div style={{
+          padding: '8px 16px',
+          backgroundColor: 'rgba(255,255,255,0.2)',
+          color: 'white',
+          borderRadius: '20px',
+          fontSize: '14px'
+        }}>
+          🏠 {roomId}
         </div>
       </div>
 
-      {/* 游戏结束 */}
+      {/* 比分板 */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        gap: '20px',
+        padding: '10px',
+        backgroundColor: 'rgba(0,0,0,0.2)',
+        flexShrink: 0
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          padding: '8px 20px',
+          backgroundColor: 'rgba(76, 175, 80, 0.3)',
+          borderRadius: '20px',
+          border: '2px solid #4CAF50'
+        }}>
+          <span style={{ color: '#4CAF50', fontSize: '18px' }}>🅰️</span>
+          <span style={{ color: '#fff', fontSize: '18px', fontWeight: 'bold' }}>{gameState.teamScores[0]}</span>
+        </div>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          padding: '8px 20px',
+          backgroundColor: 'rgba(244, 67, 54, 0.3)',
+          borderRadius: '20px',
+          border: '2px solid #f44336'
+        }}>
+          <span style={{ color: '#f44336', fontSize: '18px' }}>🅱️</span>
+          <span style={{ color: '#fff', fontSize: '18px', fontWeight: 'bold' }}>{gameState.teamScores[1]}</span>
+        </div>
+      </div>
+
+      {/* 游戏主区域 */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        padding: '10px 20px 20px'
+      }}>
+        {/* 上方 - 对手区域 */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          padding: '20px 40px'
+        }}>
+          {opponents.slice(0, 2).map((player, idx) => {
+            const pIdx = otherPlayers.findIndex(p => p.name === player.name);
+            return (
+              <PlayerAvatar
+                key={idx}
+                player={player}
+                isYou={false}
+                isCurrent={gameState.currentPlayer === pIdx}
+                team={pIdx % 2}
+                handCount={gameState.hands[pIdx]?.length || 0}
+              />
+            );
+          })}
+        </div>
+
+        {/* 中央 - 出牌区 */}
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '20px'
+        }}>
+          {/* 游戏标题 */}
+          <div style={{
+            fontSize: 'clamp(20px, 4vw, 32px)',
+            fontWeight: 'bold',
+            color: 'rgba(255,255,255,0.3)',
+            textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+          }}>
+            🃏 东北抛幺 414
+          </div>
+          
+          {/* 出牌区域 - 白色底板 */}
+          <div style={{
+            backgroundColor: '#fff',
+            borderRadius: '16px',
+            padding: '20px 40px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            minHeight: '120px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative'
+          }}>
+            {gameState.lastPlayedCards && gameState.lastPlayedCards.length > 0 ? (
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                {gameState.lastPlayedCards.map(card => (
+                  <Card key={card.id} card={card} />
+                ))}
+              </div>
+            ) : (
+              <div style={{ color: '#999', fontSize: '16px' }}>等待出牌</div>
+            )}
+            
+            {/* 借光提示 */}
+            {gameState.messages?.[gameState.messages.length - 1]?.includes('借光') && (
+              <div style={{
+                position: 'absolute',
+                top: '-15px',
+                backgroundColor: '#FFD700',
+                color: '#000',
+                padding: '4px 16px',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+              }}>
+                ✨ 借光！
+              </div>
+            )}
+          </div>
+          
+          {/* 消息区 */}
+          <div style={{
+            backgroundColor: 'rgba(0,0,0,0.4)',
+            borderRadius: '12px',
+            padding: '10px 20px',
+            maxWidth: '600px',
+            maxHeight: '80px',
+            overflow: 'hidden'
+          }}>
+            {gameState.messages?.slice(-3).map((msg, i) => (
+              <div key={i} style={{ color: '#fff', fontSize: '14px', margin: '4px 0' }}>{msg}</div>
+            ))}
+          </div>
+        </div>
+
+        {/* 下方 - 对家和自己的区域 */}
+        <div>
+          {/* 对家 */}
+          {teammate && teammateIndex !== playerIndex && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              padding: '10px'
+            }}>
+              <PlayerAvatar
+                player={teammate}
+                isYou={false}
+                isCurrent={gameState.currentPlayer === teammateIndex}
+                team={myTeam}
+                handCount={gameState.hands[teammateIndex]?.length || 0}
+              />
+            </div>
+          )}
+          
+          {/* 手牌区域 */}
+          <div style={{
+            backgroundColor: 'rgba(0,0,0,0.3)',
+            borderRadius: '20px 20px 0 0',
+            padding: '20px',
+            paddingBottom: '10px'
+          }}>
+            {/* 提示信息 */}
+            {isMyTurn && gameState.lastPlayedCards && gameState.lastPlayedCards.length > 0 && (
+              <div style={{ 
+                textAlign: 'center',
+                marginBottom: '10px',
+                color: '#ffd700',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}>
+                🎴 需要管上上面的牌
+              </div>
+            )}
+            
+            {isMyTurn && (!gameState.lastPlayedCards || gameState.lastPlayedCards.length === 0) && (
+              <div style={{ 
+                textAlign: 'center',
+                marginBottom: '10px',
+                color: '#4CAF50',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}>
+                ✨ 你是先手，任意出牌
+              </div>
+            )}
+            
+            {/* 手牌 */}
+            <Hand 
+              cards={myHand} 
+              selectedCards={selectedCards}
+              onCardClick={(card) => {
+                if (selectedCards.find(c => c.id === card.id)) {
+                  setSelectedCards(selectedCards.filter(c => c.id !== card.id));
+                } else {
+                  setSelectedCards([...selectedCards, card]);
+                }
+              }}
+              canPlay={isMyTurn}
+              isPlayer={true}
+            />
+            
+            {/* 操作按钮 */}
+            {isMyTurn && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '20px',
+                marginTop: '20px',
+                marginBottom: '10px'
+              }}>
+                <button 
+                  onClick={() => {
+                    socket.emit('playCards', { cards: selectedCards });
+                    setSelectedCards([]);
+                  }}
+                  disabled={selectedCards.length === 0}
+                  style={{ 
+                    padding: '14px 40px', 
+                    fontSize: '18px', 
+                    fontWeight: 'bold',
+                    cursor: selectedCards.length > 0 ? 'pointer' : 'not-allowed',
+                    backgroundColor: selectedCards.length > 0 ? 'linear-gradient(180deg, #4CAF50, #2E7D32)' : '#666',
+                    backgroundImage: selectedCards.length > 0 ? 'linear-gradient(180deg, #4CAF50, #2E7D32)' : 'none',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '30px',
+                    boxShadow: selectedCards.length > 0 ? '0 4px 15px rgba(76, 175, 80, 0.4)' : 'none'
+                  }}
+                >
+                  出牌 ({selectedCards.length}张)
+                </button>
+                <button 
+                  onClick={() => socket.emit('pass')}
+                  disabled={gameState.lastPlayedCards?.length === 0}
+                  style={{ 
+                    padding: '14px 40px', 
+                    fontSize: '18px', 
+                    fontWeight: 'bold',
+                    cursor: gameState.lastPlayedCards?.length > 0 ? 'pointer' : 'not-allowed',
+                    backgroundColor: gameState.lastPlayedCards?.length > 0 ? '#ff9800' : '#666',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '30px',
+                    boxShadow: gameState.lastPlayedCards?.length > 0 ? '0 4px 15px rgba(255, 152, 0, 0.4)' : 'none'
+                  }}
+                >
+                  过
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {/* 游戏结束弹窗 */}
       {gameState.gameState === 'finished' && (
         <div style={{ 
           position: 'absolute',

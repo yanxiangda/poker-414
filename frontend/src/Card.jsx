@@ -2,7 +2,7 @@ import React from 'react';
 import { CARD_ORDER } from './game/deck.js';
 
 /**
- * 卡牌组件
+ * 卡牌组件 - 参考斗地主风格
  */
 export default function Card({ card, onClick, selected, disabled, small }) {
   if (!card) return null;
@@ -10,34 +10,46 @@ export default function Card({ card, onClick, selected, disabled, small }) {
   const isRed = card.suit === '♥' || card.suit === '♦';
   const isKing = card.value === 'SJ' || card.value === 'BJ';
   
+  // 斗地主风格：更大的牌，圆角，阴影
+  const width = small ? '40px' : '70px';
+  const height = small ? '56px' : '100px';
+  const fontSize = small ? '14px' : '20px';
+  const suitSize = small ? '12px' : '16px';
+  
   const style = {
     display: 'inline-flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    width: small ? '32px' : '60px',
-    height: small ? '44px' : '84px',
+    width,
+    height,
     backgroundColor: 'white',
-    border: '1px solid #333',
-    borderRadius: '4px',
-    margin: '1px',
+    border: '1px solid #ddd',
+    borderRadius: '8px',
+    margin: '2px',
     cursor: disabled ? 'default' : 'pointer',
-    opacity: disabled ? 0.6 : 1,
-    transform: selected ? 'translateY(-8px)' : 'none',
-    boxShadow: selected ? '0 3px 6px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.2)',
-    transition: 'all 0.15s',
-    fontSize: small ? '12px' : '18px',
+    opacity: disabled ? 0.7 : 1,
+    transform: selected ? 'translateY(-15px)' : 'none',
+    boxShadow: selected 
+      ? '0 -5px 15px rgba(0,0,0,0.3), 0 0 0 2px #ffd700' 
+      : '0 2px 8px rgba(0,0,0,0.2)',
+    transition: 'all 0.2s ease',
+    fontSize,
     fontWeight: 'bold',
-    color: isRed ? '#c00' : '#333',
-    userSelect: 'none'
+    color: isRed ? '#d32f2f' : '#1a1a1a',
+    userSelect: 'none',
+    position: 'relative',
+    overflow: 'hidden'
   };
   
   const renderContent = () => {
     if (isKing) {
       return (
-        <div style={{ textAlign: 'center', lineHeight: '1.1' }}>
-          <div style={{ fontSize: small ? '10px' : '14px' }}>{card.value === 'BJ' ? '👑' : '🤡'}</div>
-          <div style={{ fontSize: small ? '8px' : '10px' }}>
+        <div style={{ textAlign: 'center', lineHeight: '1.2' }}>
+          <div style={{ fontSize: small ? '16px' : '24px' }}>
+            {card.value === 'BJ' ? '👑' : '🌟'}
+          </div>
+          <div style={{ fontSize: small ? '10px' : '12px', color: isRed ? '#d32f2f' : '#1a1a1a' }}>
             {card.value === 'BJ' ? '大王' : '小王'}
           </div>
         </div>
@@ -46,8 +58,12 @@ export default function Card({ card, onClick, selected, disabled, small }) {
     
     return (
       <>
-        <div style={{ fontSize: small ? '8px' : '12px', lineHeight: '1' }}>{card.suit}</div>
-        <div style={{ lineHeight: '1' }}>{card.value}</div>
+        <div style={{ fontSize: suitSize, lineHeight: '1', color: isRed ? '#d32f2f' : '#1a1a1a' }}>
+          {card.suit}
+        </div>
+        <div style={{ lineHeight: '1.1', fontSize: small ? '16px' : '22px' }}>
+          {card.value}
+        </div>
       </>
     );
   };
@@ -67,14 +83,14 @@ export function CardBack({ small }) {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: small ? '32px' : '60px',
-    height: small ? '44px' : '84px',
+    width: small ? '40px' : '70px',
+    height: small ? '56px' : '100px',
     backgroundColor: '#1a5f7a',
     border: '1px solid #0d3d4d',
-    borderRadius: '4px',
-    margin: '1px',
+    borderRadius: '8px',
+    margin: '2px',
     backgroundImage: 'repeating-linear-gradient(45deg, #1a5f7a 0, #1a5f7a 10px, #155065 10px, #155065 20px)',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
   };
   
   return <div style={style} />;

@@ -568,6 +568,7 @@ function checkBotTurn(room) {
         room.messages.push(`💰 ${room.players[room.lastPlayer].name}获得 ${score}分`);
         
         room.tableCards = [];
+        room.lastPlayedCards = []; // 清空最后一手牌
         room.passCount = 0;
         room.currentPlayer = room.lastPlayer;
         

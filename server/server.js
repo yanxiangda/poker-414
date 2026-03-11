@@ -355,8 +355,11 @@ io.on('connection', (socket) => {
     const cards = data.cards;
     if (!cards || cards.length === 0) return;
     
-    // 验证是否能管上
-    if (room.tableCards.length > 0 && !canPlay(room.tableCards, cards)) {
+    // 验证是否能管上（使用 lastPlayedCards 而不是 tableCards）
+    const needToBeat = room.lastPlayedCards && room.lastPlayedCards.length > 0 
+      ? room.lastPlayedCards 
+      : [];
+    if (needToBeat.length > 0 && !canPlay(needToBeat, cards)) {
       socket.emit('error', { message: '这牌管不上！' });
       return;
     }

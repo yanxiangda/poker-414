@@ -188,6 +188,24 @@ export function canPlay(prevHand, newHand) {
       return true;
     }
     
+    // 炸可以管对子
+    if (prev.type === HAND_TYPE.PAIR && 
+        newHandAnalysis.type === HAND_TYPE.BOMB) {
+      return true;
+    }
+    
+    // 幺牌可以管单张
+    if (prev.type === HAND_TYPE.SINGLE && 
+        newHandAnalysis.type === HAND_TYPE.YAO) {
+      return true;
+    }
+    
+    // 幺牌可以管对子
+    if (prev.type === HAND_TYPE.PAIR && 
+        newHandAnalysis.type === HAND_TYPE.YAO) {
+      return true;
+    }
+    
     // 幺牌可以管炸（幺牌路数 >= 炸的路数，幺牌是同路数最大的）
     if (prev.type === HAND_TYPE.BOMB && 
         newHandAnalysis.type === HAND_TYPE.YAO && 

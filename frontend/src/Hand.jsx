@@ -3,10 +3,11 @@ import Card from './Card.jsx';
 import { CARD_ORDER } from './game/deck.js';
 
 /**
- * 手牌组件 - 斗地主风格横向展开
+ * 手牌组件 - 斗地主风格横向展开，响应式适配
  */
-export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPlayer }) {
+export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPlayer, windowWidth }) {
   const [localSelected, setLocalSelected] = React.useState([]);
+  const windowW = windowWidth || (typeof window !== 'undefined' ? window.innerWidth : 1024);
   
   // 当外部 selectedCards 清空时，同步清空本地选中状态
   React.useEffect(() => {
@@ -40,20 +41,22 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     return selectedCards?.some(c => c.id === card.id) || localSelected.includes(card.id);
   };
   
-  // 斗地主风格：手牌横向展开，有重叠效果，移动端适配
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const overlap = isMobile ? '-25px' : '-35px'; // 移动端重叠少一些，牌更分散
+  // 响应式重叠：屏幕越小，重叠越少
+  const isMobile = windowW < 768;
+  const isSmallMobile = windowW < 400;
+  const overlap = isSmallMobile ? '-15px' : isMobile ? '-25px' : '-35px';
   
+  // 斗地主风格：手牌横向展开，有重叠效果，移动端适配
   return (
     <div style={{
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'flex-end',
-      padding: isMobile ? '5px 10px 0' : '10px 20px 0', // 底部 padding 改为 0
-      minHeight: isMobile ? '85px' : '105px', // 减小最小高度
+      padding: isMobile ? '5px 10px 0' : '10px 20px 0',
+      minHeight: isSmallMobile ? '80px' : isMobile ? '95px' : '105px',
       overflowX: 'auto',
       gap: '0',
-      WebkitOverflowScrolling: 'touch' // iOS 平滑滚动
+      WebkitOverflowScrolling: 'touch'
     }}>
       {sortedCards.map((card, index) => {
         const selected = isSelected(card);
@@ -66,7 +69,7 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
               transition: 'transform 0.2s ease',
               transform: selected ? 'translateY(-20px)' : 'translateY(0)',
               zIndex: selected ? 100 : index,
-              flexShrink: 0 // 防止牌被压缩
+              flexShrink: 0
             }}
           >
             <Card
@@ -75,6 +78,7 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
               onClick={() => handleClick(card)}
               disabled={!canPlay && isPlayer}
               small={false}
+              windowWidth={windowW}
             />
           </div>
         );

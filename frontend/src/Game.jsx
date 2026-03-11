@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { analyzeHand, canPlay, getHandTypeName } from './game/rules.js';
 import { calculateTableScore } from './game/scoring.js';
 import Hand from './Hand.jsx';
@@ -7,29 +7,37 @@ import Card from './Card.jsx';
 /**
  * 玩家头像组件
  */
-function PlayerAvatar({ player, isYou, isCurrent, team, handCount }) {
+function PlayerAvatar({ player, isYou, isCurrent, team, handCount, windowWidth }) {
   const teamColor = team === 0 ? '#4CAF50' : '#f44336';
   const bgColor = isCurrent ? '#FFD700' : '#1a4d8f';
+  
+  const isMobile = windowWidth < 768;
+  const isSmallMobile = windowWidth < 400;
+  
+  const avatarSize = isSmallMobile ? '50px' : isMobile ? '60px' : '80px';
+  const fontSize = isSmallMobile ? '20px' : isMobile ? '24px' : '36px';
+  const infoFontSize = isSmallMobile ? '11px' : isMobile ? '12px' : '14px';
   
   return (
     <div style={{
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      gap: '8px'
+      gap: isMobile ? '6px' : '8px'
     }}>
       <div style={{
-        width: 'clamp(60px, 12vw, 80px)',
-        height: 'clamp(60px, 12vw, 80px)',
+        width: avatarSize,
+        height: avatarSize,
         borderRadius: '50%',
         backgroundColor: bgColor,
         border: `3px solid ${teamColor}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: 'clamp(24px, 5vw, 36px)',
+        fontSize,
         boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-        position: 'relative'
+        position: 'relative',
+        flexShrink: 0
       }}>
         {isYou ? '🧑' : '🤖'}
         {isCurrent && (
@@ -54,14 +62,14 @@ function PlayerAvatar({ player, isYou, isCurrent, team, handCount }) {
       <div style={{
         backgroundColor: 'rgba(0,0,0,0.6)',
         borderRadius: '12px',
-        padding: '6px 12px',
+        padding: isMobile ? '4px 8px' : '6px 12px',
         textAlign: 'center',
-        minWidth: '80px'
+        minWidth: isSmallMobile ? '60px' : '80px'
       }}>
-        <div style={{ color: '#fff', fontSize: 'clamp(12px, 2.5vw, 14px)', fontWeight: 'bold' }}>
+        <div style={{ color: '#fff', fontSize: infoFontSize, fontWeight: 'bold' }}>
           {isYou ? '你' : player?.name || `P${team + 1}`}
         </div>
-        <div style={{ color: '#ffd700', fontSize: 'clamp(11px, 2vw, 13px)' }}>
+        <div style={{ color: '#ffd700', fontSize: isSmallMobile ? '10px' : isMobile ? '11px' : '13px' }}>
           {handCount}张
         </div>
       </div>
@@ -71,6 +79,18 @@ function PlayerAvatar({ player, isYou, isCurrent, team, handCount }) {
 
 export default function Game({ socket, gameState, playerIndex, onLeave, roomId }) {
   const [selectedCards, setSelectedCards] = useState([]);
+  const [windowSize, setWindowSize] = useState({ width: typeof window !== 'undefined' ? window.innerWidth : 1024, height: typeof window !== 'undefined' ? window.innerHeight : 768 });
+  
+  // 监听窗口大小变化，实时适配屏幕
+  React.useEffect(() => {
+    const updateSize = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+    
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
 
   const handleLeaveGame = () => {
     if (window.confirm('确定要退出游戏返回主页吗？')) {
@@ -82,6 +102,11 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
   const isMyTurn = gameState.currentPlayer === playerIndex;
   const myTeam = playerIndex % 2;
   const myHand = gameState.hands[playerIndex] || [];
+  
+  // 响应式尺寸计算
+  const isMobile = windowSize.width < 768;
+  const isSmallMobile = windowSize.width < 400;
+  const isTablet = windowSize.width >= 768 && windowSize.width < 1024;
   
   const otherPlayers = gameState.players || [];
   const teammateIndex = otherPlayers.findIndex((p, i) => i % 2 === myTeam && i !== playerIndex);
@@ -132,9 +157,6 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
       </div>
     );
   }
-
-  // 移动端检测
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   
   return (
     <div style={{ 
@@ -244,6 +266,7 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
                 isCurrent={gameState.currentPlayer === idx}
                 team={idx % 2}
                 handCount={gameState.hands[idx]?.length || 0}
+                windowWidth={windowSize.width}
               />
             );
           })}
@@ -281,7 +304,7 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
             {gameState.lastPlayedCards && gameState.lastPlayedCards.length > 0 ? (
               <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
                 {gameState.lastPlayedCards.map(card => (
-                  <Card key={card.id} card={card} />
+                  <Card key={card.id} card={card} windowWidth={windowSize.width} />
                 ))}
               </div>
             ) : (
@@ -368,6 +391,7 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
               }}
               canPlay={isMyTurn}
               isPlayer={true}
+              windowWidth={windowSize.width}
             />
           </div>
           

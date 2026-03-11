@@ -2,20 +2,32 @@ import React from 'react';
 import { CARD_ORDER } from './game/deck.js';
 
 /**
- * 卡牌组件 - 参考斗地主风格，移动端适配
+ * 卡牌组件 - 参考斗地主风格，响应式适配
  */
-export default function Card({ card, onClick, selected, disabled, small }) {
+export default function Card({ card, onClick, selected, disabled, small, windowWidth }) {
   if (!card) return null;
   
   const isRed = card.suit === '♥' || card.suit === '♦';
   const isKing = card.value === 'SJ' || card.value === 'BJ';
   
-  // 响应式尺寸：手机端更大，桌面端适中
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const width = small ? (isMobile ? '45px' : '40px') : (isMobile ? '55px' : '70px');
-  const height = small ? (isMobile ? '65px' : '56px') : (isMobile ? '80px' : '100px');
-  const fontSize = small ? (isMobile ? '15px' : '14px') : (isMobile ? '18px' : '20px');
-  const suitSize = small ? (isMobile ? '13px' : '12px') : (isMobile ? '15px' : '16px');
+  // 响应式尺寸：根据屏幕宽度动态调整
+  const isMobile = windowWidth < 768;
+  const isSmallMobile = windowWidth < 400;
+  
+  // 小屏幕手机：牌更大，重叠更少
+  // 大屏幕：牌适中，美观
+  const width = small 
+    ? (isSmallMobile ? '42px' : isMobile ? '48px' : '40px')
+    : (isSmallMobile ? '50px' : isMobile ? '60px' : '70px');
+  const height = small
+    ? (isSmallMobile ? '60px' : isMobile ? '70px' : '56px')
+    : (isSmallMobile ? '75px' : isMobile ? '90px' : '100px');
+  const fontSize = small
+    ? (isSmallMobile ? '14px' : isMobile ? '16px' : '14px')
+    : (isSmallMobile ? '17px' : isMobile ? '19px' : '20px');
+  const suitSize = small
+    ? (isSmallMobile ? '12px' : isMobile ? '14px' : '12px')
+    : (isSmallMobile ? '14px' : isMobile ? '16px' : '16px');
   
   const style = {
     display: 'inline-flex',

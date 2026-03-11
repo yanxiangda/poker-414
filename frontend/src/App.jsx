@@ -96,15 +96,15 @@ export default function App() {
       setRoomId(data.roomId);
       setPlayerIndex(data.playerIndex);
       setLastRoomId(data.roomId);
+      setScreen('lobby'); // ✅ 切换到准备页面
       
-      // 不修改 screen！保持 localStorage 中的状态
-      console.log('🏠 已加入房间，保持当前页面:', screen);
+      console.log('🏠 已加入房间，切换到 lobby 页面');
       
       // 更新 localStorage
       localStorage.setItem('poker414_lastRoom', JSON.stringify({
         roomId: data.roomId,
         playerName: savedState?.playerName || playerName,
-        screen: screen,  // 保持当前 screen
+        screen: 'lobby',
         gameState: gameState
       }));
     });

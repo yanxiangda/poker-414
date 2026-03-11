@@ -310,11 +310,14 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
             borderRadius: '12px',
             padding: '10px 20px',
             maxWidth: '600px',
-            maxHeight: '80px',
-            overflow: 'hidden'
+            maxHeight: '100px',
+            overflowY: 'auto',
+            fontSize: '13px'
           }}>
-            {gameState.messages?.slice(-3).map((msg, i) => (
-              <div key={i} style={{ color: '#fff', fontSize: '14px', margin: '4px 0' }}>{msg}</div>
+            {gameState.messages?.slice(-10).reverse().map((msg, i) => (
+              <div key={i} style={{ color: '#fff', margin: '3px 0', opacity: i === 0 ? 1 : 0.8 }}>
+                {msg}
+              </div>
             ))}
           </div>
         </div>

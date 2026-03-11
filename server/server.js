@@ -384,7 +384,13 @@ io.on('connection', (socket) => {
     room.passCount = 0;
     
     const analysis = analyzeHand(cards);
-    room.messages.push(`🎴 ${room.players[playerIndex].name}出牌：${getHandTypeName(analysis)}`);
+    // 显示具体出的牌
+    const cardsDetail = cards.map(c => {
+      if (c.value === 'BJ') return '大王';
+      if (c.value === 'SJ') return '小王';
+      return `${c.suit}${c.value}`;
+    }).join(' ');
+    room.messages.push(`🎴 ${room.players[playerIndex].name}出牌：${getHandTypeName(analysis)} [${cardsDetail}]`);
     
     // 检查是否出完
     if (room.hands[playerIndex].length === 0) {
@@ -584,8 +590,14 @@ function checkBotTurn(room) {
       room.passCount = 0;
       
       const analysis = analyzeHand(chosenCards);
-      room.messages.push(`🤖 ${currentPlayer.name}出牌：${getHandTypeName(analysis)}`);
-      console.log(`🤖 ${currentPlayer.name}出牌：${getHandTypeName(analysis)}`);
+      // 显示具体出的牌
+      const cardsDetail = chosenCards.map(c => {
+        if (c.value === 'BJ') return '大王';
+        if (c.value === 'SJ') return '小王';
+        return `${c.suit}${c.value}`;
+      }).join(' ');
+      room.messages.push(`🤖 ${currentPlayer.name}出牌：${getHandTypeName(analysis)} [${cardsDetail}]`);
+      console.log(`🤖 ${currentPlayer.name}出牌：${getHandTypeName(analysis)} [${cardsDetail}]`);
       
       if (room.hands[botIndex].length === 0) {
         room.messages.push(`✨ ${currentPlayer.name}出完牌了！`);

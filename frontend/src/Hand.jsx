@@ -52,11 +52,12 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'flex-end',
-      padding: isMobile ? '5px 10px 0' : '10px 20px 0',
-      minHeight: isSmallMobile ? '80px' : isMobile ? '95px' : '105px',
+      padding: isMobile ? '3px 8px 0' : '5px 15px 0',
+      minHeight: isSmallMobile ? '70px' : isMobile ? '77px' : '90px',
       overflowX: 'auto',
       gap: '0',
-      WebkitOverflowScrolling: 'touch'
+      WebkitOverflowScrolling: 'touch',
+      flexShrink: 0
     }}>
       {sortedCards.map((card, index) => {
         const selected = isSelected(card);

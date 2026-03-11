@@ -332,14 +332,15 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
           <div style={{
             backgroundColor: 'rgba(0,0,0,0.4)',
             borderRadius: '12px',
-            padding: '10px 20px',
+            padding: '8px 15px',
             maxWidth: '600px',
-            maxHeight: '100px',
-            overflowY: 'auto',
-            fontSize: '13px'
+            height: '60px', // 固定高度
+            overflowY: 'auto', // 内部滚动
+            fontSize: '12px',
+            flexShrink: 0 // 不被压缩
           }}>
             {gameState.messages?.slice(-10).reverse().map((msg, i) => (
-              <div key={i} style={{ color: '#fff', margin: '3px 0', opacity: i === 0 ? 1 : 0.8 }}>
+              <div key={i} style={{ color: '#fff', margin: '2px 0', opacity: i === 0 ? 1 : 0.7 }}>
                 {msg}
               </div>
             ))}
@@ -353,7 +354,7 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
           <div style={{
             backgroundColor: 'rgba(0,0,0,0.3)',
             borderRadius: isMobile ? '12px 12px 0 0' : '20px 20px 0 0',
-            padding: isMobile ? '8px 10px' : '15px 20px',
+            padding: isMobile ? '5px 8px' : '10px 15px',
             paddingBottom: '0'
           }}>
             {isMyTurn && gameState.lastPlayedCards && gameState.lastPlayedCards.length > 0 && (
@@ -401,10 +402,11 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
             <div style={{
               display: 'flex',
               justifyContent: 'center',
-              gap: isMobile ? '10px' : '20px',
-              padding: isMobile ? '8px 10px' : '12px 20px',
+              gap: isMobile ? '8px' : '15px',
+              padding: isMobile ? '6px 8px' : '10px 15px',
               backgroundColor: 'rgba(0,0,0,0.5)',
-              flexWrap: 'wrap'
+              flexWrap: 'wrap',
+              flexShrink: 0
             }}>
                 <button 
                   onClick={() => {

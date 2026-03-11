@@ -14,20 +14,19 @@ export default function Card({ card, onClick, selected, disabled, small, windowW
   const isMobile = windowWidth < 768;
   const isSmallMobile = windowWidth < 400;
   
-  // 小屏幕手机：牌更大，重叠更少
-  // 大屏幕：牌适中，美观
+  // 优化尺寸：小屏更紧凑
   const width = small 
-    ? (isSmallMobile ? '42px' : isMobile ? '48px' : '40px')
-    : (isSmallMobile ? '50px' : isMobile ? '60px' : '70px');
+    ? (isSmallMobile ? '36px' : isMobile ? '40px' : '40px')
+    : (isSmallMobile ? '42px' : isMobile ? '48px' : '60px');
   const height = small
-    ? (isSmallMobile ? '60px' : isMobile ? '70px' : '56px')
-    : (isSmallMobile ? '75px' : isMobile ? '90px' : '100px');
+    ? (isSmallMobile ? '52px' : isMobile ? '58px' : '56px')
+    : (isSmallMobile ? '65px' : isMobile ? '72px' : '85px');
   const fontSize = small
-    ? (isSmallMobile ? '14px' : isMobile ? '16px' : '14px')
-    : (isSmallMobile ? '17px' : isMobile ? '19px' : '20px');
+    ? (isSmallMobile ? '12px' : isMobile ? '13px' : '14px')
+    : (isSmallMobile ? '14px' : isMobile ? '16px' : '18px');
   const suitSize = small
-    ? (isSmallMobile ? '12px' : isMobile ? '14px' : '12px')
-    : (isSmallMobile ? '14px' : isMobile ? '16px' : '16px');
+    ? (isSmallMobile ? '10px' : isMobile ? '11px' : '12px')
+    : (isSmallMobile ? '12px' : isMobile ? '13px' : '15px');
   
   const style = {
     display: 'inline-flex',

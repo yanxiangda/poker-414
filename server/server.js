@@ -371,7 +371,6 @@ io.on('connection', (socket) => {
     room.lastPlayedCards = cards; // 记录最后一手牌
     room.lastPlayer = playerIndex;
     room.passCount = 0;
-    room.currentPlayer = (playerIndex + 1) % room.players.length;
     
     const analysis = analyzeHand(cards);
     room.messages.push(`🎴 ${room.players[playerIndex].name}出牌：${getHandTypeName(analysis)}`);
@@ -379,8 +378,14 @@ io.on('connection', (socket) => {
     // 检查是否出完
     if (room.hands[playerIndex].length === 0) {
       room.messages.push(`✨ ${room.players[playerIndex].name}出完牌了！`);
+      // 出完牌的玩家不再参与，currentPlayer 跳过该玩家
+      room.currentPlayer = (playerIndex + 1) % room.players.length;
+      while (room.hands[room.currentPlayer] && room.hands[room.currentPlayer].length === 0) {
+        room.currentPlayer = (room.currentPlayer + 1) % room.players.length;
+      }
       checkRoundEnd(room);
     } else {
+      room.currentPlayer = (playerIndex + 1) % room.players.length;
       room.broadcast('gameUpdate', room.toGameState());
       checkBotTurn(room); // 检查下一个是否是机器人
     }
@@ -542,7 +547,6 @@ function checkBotTurn(room) {
       room.lastPlayedCards = chosenCards; // 记录最后一手牌
       room.lastPlayer = botIndex;
       room.passCount = 0;
-      room.currentPlayer = (botIndex + 1) % room.players.length;
       
       const analysis = analyzeHand(chosenCards);
       room.messages.push(`🤖 ${currentPlayer.name}出牌：${getHandTypeName(analysis)}`);
@@ -550,8 +554,14 @@ function checkBotTurn(room) {
       
       if (room.hands[botIndex].length === 0) {
         room.messages.push(`✨ ${currentPlayer.name}出完牌了！`);
+        // 出完牌的玩家不再参与，currentPlayer 跳过该玩家
+        room.currentPlayer = (botIndex + 1) % room.players.length;
+        while (room.hands[room.currentPlayer] && room.hands[room.currentPlayer].length === 0) {
+          room.currentPlayer = (room.currentPlayer + 1) % room.players.length;
+        }
         checkRoundEnd(room);
       } else {
+        room.currentPlayer = (botIndex + 1) % room.players.length;
         room.broadcast('gameUpdate', room.toGameState());
         checkBotTurn(room); // 检查下一个是否是机器人
       }

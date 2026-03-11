@@ -83,14 +83,6 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
   const myTeam = playerIndex % 2;
   const myHand = gameState.hands[playerIndex] || [];
   
-  const remainingCards = {
-    '大王': gameState.hands.flat().filter(c => c.value === 'BJ').length,
-    '小王': gameState.hands.flat().filter(c => c.value === 'SJ').length,
-    '2': gameState.hands.flat().filter(c => c.value === '2').length,
-    'A': gameState.hands.flat().filter(c => c.value === 'A').length,
-    'K': gameState.hands.flat().filter(c => c.value === 'K').length,
-  };
-  
   const otherPlayers = gameState.players || [];
   const teammateIndex = otherPlayers.findIndex((p, i) => i % 2 === myTeam && i !== playerIndex);
   const teammate = teammateIndex >= 0 ? otherPlayers[teammateIndex] : null;
@@ -173,24 +165,6 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
         >
           ← 退出
         </button>
-        
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {Object.entries(remainingCards).map(([card, count]) => (
-            <div key={card} style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              backgroundColor: 'rgba(255,255,255,0.15)',
-              padding: '4px 10px',
-              borderRadius: '12px'
-            }}>
-              <span style={{ color: '#fff', fontSize: '12px' }}>{card}</span>
-              <span style={{ color: count > 0 ? '#ffd700' : '#666', fontSize: '14px', fontWeight: 'bold' }}>
-                {count}
-              </span>
-            </div>
-          ))}
-        </div>
         
         <div style={{
           padding: '8px 16px',

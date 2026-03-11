@@ -23,7 +23,7 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
   const sortedCards = [...cards].sort((a, b) => CARD_ORDER[b.value] - CARD_ORDER[a.value]);
   
   const handleClick = (card) => {
-    if (!isPlayer) return;
+    if (!isPlayer || !canPlay) return;
     
     if (localSelected.includes(card.id)) {
       setLocalSelected(localSelected.filter(id => id !== card.id));

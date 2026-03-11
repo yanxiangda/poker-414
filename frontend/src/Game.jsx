@@ -323,12 +323,14 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
         </div>
 
         {/* 下方 - 自己的手牌区域 */}
-        <div>
+        <div style={{
+          paddingBottom: isMobile ? '10px' : '20px' // 确保底部有空间
+        }}>
           <div style={{
             backgroundColor: 'rgba(0,0,0,0.3)',
             borderRadius: isMobile ? '12px 12px 0 0' : '20px 20px 0 0',
-            padding: isMobile ? '10px' : '20px',
-            paddingBottom: isMobile ? '5px' : '10px'
+            padding: isMobile ? '8px 10px' : '15px 20px',
+            paddingBottom: '0'
           }}>
             {isMyTurn && gameState.lastPlayedCards && gameState.lastPlayedCards.length > 0 && (
               <div style={{ 
@@ -367,16 +369,18 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
               canPlay={isMyTurn}
               isPlayer={true}
             />
-            
-            {isMyTurn && (
-              <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                gap: isMobile ? '10px' : '20px',
-                marginTop: isMobile ? '10px' : '20px',
-                marginBottom: isMobile ? '5px' : '10px',
-                flexWrap: 'wrap'
-              }}>
+          </div>
+          
+          {/* 出牌按钮 - 放在手牌区域外面，确保可见 */}
+          {isMyTurn && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: isMobile ? '10px' : '20px',
+              padding: isMobile ? '8px 10px' : '12px 20px',
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              flexWrap: 'wrap'
+            }}>
                 <button 
                   onClick={() => {
                     console.log('出牌:', selectedCards);
@@ -426,7 +430,6 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
                 </button>
               </div>
             )}
-          </div>
         </div>
       </div>
     </div>

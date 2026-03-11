@@ -49,8 +49,8 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'flex-end',
-      padding: isMobile ? '5px 10px' : '10px 20px',
-      minHeight: isMobile ? '100px' : '120px',
+      padding: isMobile ? '5px 10px 0' : '10px 20px 0', // 底部 padding 改为 0
+      minHeight: isMobile ? '85px' : '105px', // 减小最小高度
       overflowX: 'auto',
       gap: '0',
       WebkitOverflowScrolling: 'touch' // iOS 平滑滚动

@@ -87,7 +87,12 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
   const handlePlayCards = () => {
     if (selectedCards.length === 0) return;
     
-    if (gameState.tableCards.length > 0 && !canPlay(gameState.tableCards, selectedCards)) {
+    // 使用 lastPlayedCards 判断需要管什么，而不是 tableCards
+    const needToBeat = gameState.lastPlayedCards && gameState.lastPlayedCards.length > 0 
+      ? gameState.lastPlayedCards 
+      : [];
+    
+    if (needToBeat.length > 0 && !canPlay(needToBeat, selectedCards)) {
       alert('这牌管不上！');
       return;
     }

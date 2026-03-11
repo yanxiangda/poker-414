@@ -453,6 +453,7 @@ function startGame(room) {
   const deck = shuffle(createTripleDeck());
   room.hands = dealCards(deck);
   room.tableCards = [];
+  room.lastPlayedCards = [];
   room.currentPlayer = 0;
   room.lastPlayer = null;
   room.passCount = 0;

@@ -161,12 +161,13 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
   return (
     <div style={{ 
       minHeight: '100vh',
-      height: isMobile ? '100dvh' : '100vh', // 移动端使用动态视口高度
+      minHeight: isMobile ? '100dvh' : '100vh', // 移动端使用动态视口高度
       display: 'flex',
       flexDirection: 'column',
       background: 'linear-gradient(180deg, #1a4d8f 0%, #0d2847 50%, #1a4d8f 100%)',
       position: 'relative',
-      overflow: 'hidden'
+      overflowY: 'auto', // 允许垂直滚动
+      overflowX: 'hidden'
     }}>
       {/* 顶部信息栏 */}
       <div style={{

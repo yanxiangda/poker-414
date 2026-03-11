@@ -294,6 +294,43 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
         flexShrink: 0,
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}>
+        {/* 需要管上的牌提示 */}
+        {isMyTurn && gameState.tableCards.length > 0 && (
+          <div style={{ 
+            padding: 'clamp(6px, 1.5vh, 10px)', 
+            backgroundColor: '#fff3e0', 
+            borderRadius: '8px',
+            marginBottom: 'clamp(6px, 1.5vh, 10px)',
+            textAlign: 'center',
+            border: '1px solid #ffb74d'
+          }}>
+            <div style={{ fontSize: 'clamp(11px, 2.5vw, 13px)', fontWeight: 'bold', color: '#e65100', marginBottom: '4px' }}>
+              🎴 需要管上：
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px', justifyContent: 'center' }}>
+              {gameState.tableCards.map(card => (
+                <Card key={card.id} card={card} small />
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* 先手提示 */}
+        {isMyTurn && gameState.tableCards.length === 0 && (
+          <div style={{ 
+            padding: 'clamp(6px, 1.5vh, 10px)', 
+            backgroundColor: '#e3f2fd', 
+            borderRadius: '8px',
+            marginBottom: 'clamp(6px, 1.5vh, 10px)',
+            textAlign: 'center',
+            border: '1px solid #64b5f6'
+          }}>
+            <div style={{ fontSize: 'clamp(11px, 2.5vw, 13px)', fontWeight: 'bold', color: '#1565c0' }}>
+              ✨ 你是先手，任意出牌
+            </div>
+          </div>
+        )}
+        
         <div style={{ fontSize: 'clamp(12px, 3vw, 14px)', marginBottom: 'clamp(6px, 1.5vh, 10px)', textAlign: 'center', fontWeight: 'bold' }}>
           你的手牌 ({myHand.length}张) {isMyTurn && <span style={{ color: '#4CAF50' }}>⏳ 请出牌</span>}
         </div>

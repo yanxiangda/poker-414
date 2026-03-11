@@ -362,7 +362,7 @@ io.on('connection', (socket) => {
     // 出牌
     const chosenIds = cards.map(c => c.id);
     room.hands[playerIndex] = room.hands[playerIndex].filter(c => !chosenIds.includes(c.id));
-    room.tableCards = cards;
+    room.tableCards = [...room.tableCards, ...cards]; // 追加到桌上，不是替换
     room.lastPlayer = playerIndex;
     room.passCount = 0;
     room.currentPlayer = (playerIndex + 1) % room.players.length;
@@ -530,7 +530,7 @@ function checkBotTurn(room) {
       // 机器人出牌
       const chosenIds = chosenCards.map(c => c.id);
       room.hands[botIndex] = botHand.filter(c => !chosenIds.includes(c.id));
-      room.tableCards = chosenCards;
+      room.tableCards = [...room.tableCards, ...chosenCards]; // 追加到桌上，不是替换
       room.lastPlayer = botIndex;
       room.passCount = 0;
       room.currentPlayer = (botIndex + 1) % room.players.length;

@@ -295,7 +295,7 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}>
         {/* 需要管上的牌提示 */}
-        {isMyTurn && gameState.tableCards.length > 0 && (
+        {isMyTurn && gameState.lastPlayedCards && gameState.lastPlayedCards.length > 0 && (
           <div style={{ 
             padding: 'clamp(6px, 1.5vh, 10px)', 
             backgroundColor: '#fff3e0', 
@@ -308,7 +308,7 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
               🎴 需要管上：
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px', justifyContent: 'center' }}>
-              {gameState.tableCards.map(card => (
+              {gameState.lastPlayedCards.map(card => (
                 <Card key={card.id} card={card} small />
               ))}
             </div>
@@ -316,7 +316,7 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
         )}
         
         {/* 先手提示 */}
-        {isMyTurn && gameState.tableCards.length === 0 && (
+        {isMyTurn && (!gameState.lastPlayedCards || gameState.lastPlayedCards.length === 0) && (
           <div style={{ 
             padding: 'clamp(6px, 1.5vh, 10px)', 
             backgroundColor: '#e3f2fd', 

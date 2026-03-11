@@ -26,13 +26,14 @@ class Room {
     this.maxPlayers = 6;
     this.gameState = 'waiting'; // waiting, playing, finished
     this.hands = [[], [], [], [], [], []];
-    this.tableCards = [];
+    this.tableCards = []; // 桌上所有牌（用于计算分数）
     this.currentPlayer = 0;
     this.lastPlayer = null;
     this.passCount = 0;
     this.teamScores = [0, 0];
     this.firstFinishedTeam = null;
     this.messages = [];
+    this.lastPlayedCards = []; // 最后一手牌（用于提示玩家需要管什么）
   }
 
   addPlayer(socketId, name, isBot = false) {
@@ -88,6 +89,7 @@ class Room {
       gameState: this.gameState,
       hands: this.hands,
       tableCards: this.tableCards,
+      lastPlayedCards: this.lastPlayedCards, // 最后一手牌（用于提示）
       currentPlayer: this.currentPlayer,
       lastPlayer: this.lastPlayer,
       passCount: this.passCount,
@@ -363,6 +365,7 @@ io.on('connection', (socket) => {
     const chosenIds = cards.map(c => c.id);
     room.hands[playerIndex] = room.hands[playerIndex].filter(c => !chosenIds.includes(c.id));
     room.tableCards = [...room.tableCards, ...cards]; // 追加到桌上，不是替换
+    room.lastPlayedCards = cards; // 记录最后一手牌
     room.lastPlayer = playerIndex;
     room.passCount = 0;
     room.currentPlayer = (playerIndex + 1) % room.players.length;
@@ -407,6 +410,7 @@ io.on('connection', (socket) => {
       room.messages.push(`💰 ${room.players[room.lastPlayer].name}获得 ${score}分`);
       
       room.tableCards = [];
+      room.lastPlayedCards = []; // 清空最后一手牌
       room.passCount = 0;
       room.currentPlayer = room.lastPlayer; // 上轮赢家先出牌
       
@@ -531,6 +535,7 @@ function checkBotTurn(room) {
       const chosenIds = chosenCards.map(c => c.id);
       room.hands[botIndex] = botHand.filter(c => !chosenIds.includes(c.id));
       room.tableCards = [...room.tableCards, ...chosenCards]; // 追加到桌上，不是替换
+      room.lastPlayedCards = chosenCards; // 记录最后一手牌
       room.lastPlayer = botIndex;
       room.passCount = 0;
       room.currentPlayer = (botIndex + 1) % room.players.length;

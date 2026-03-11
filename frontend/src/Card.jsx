@@ -2,7 +2,7 @@ import React from 'react';
 import { CARD_ORDER } from './game/deck.js';
 
 /**
- * 卡牌组件 - 参考斗地主风格
+ * 卡牌组件 - 参考斗地主风格，移动端适配
  */
 export default function Card({ card, onClick, selected, disabled, small }) {
   if (!card) return null;
@@ -10,11 +10,12 @@ export default function Card({ card, onClick, selected, disabled, small }) {
   const isRed = card.suit === '♥' || card.suit === '♦';
   const isKing = card.value === 'SJ' || card.value === 'BJ';
   
-  // 斗地主风格：更大的牌，圆角，阴影
-  const width = small ? '40px' : '70px';
-  const height = small ? '56px' : '100px';
-  const fontSize = small ? '14px' : '20px';
-  const suitSize = small ? '12px' : '16px';
+  // 响应式尺寸：手机端更大，桌面端适中
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const width = small ? (isMobile ? '45px' : '40px') : (isMobile ? '55px' : '70px');
+  const height = small ? (isMobile ? '65px' : '56px') : (isMobile ? '80px' : '100px');
+  const fontSize = small ? (isMobile ? '15px' : '14px') : (isMobile ? '18px' : '20px');
+  const suitSize = small ? (isMobile ? '13px' : '12px') : (isMobile ? '15px' : '16px');
   
   const style = {
     display: 'inline-flex',

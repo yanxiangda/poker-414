@@ -2,8 +2,18 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>东北抛幺 414 - 多人联机</title>
+    <style>
+      * { -webkit-tap-highlight-color: transparent; }
+      body { overflow: hidden; touch-action: manipulation; }
+      @media (max-width: 768px) {
+        html { font-size: 14px; }
+        button { font-size: 16px !important; }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

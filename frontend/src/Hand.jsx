@@ -40,30 +40,33 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     return selectedCards?.some(c => c.id === card.id) || localSelected.includes(card.id);
   };
   
-  // 斗地主风格：手牌横向展开，有重叠效果
+  // 斗地主风格：手牌横向展开，有重叠效果，移动端适配
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const overlap = isMobile ? '-25px' : '-35px'; // 移动端重叠少一些，牌更分散
+  
   return (
     <div style={{
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'flex-end',
-      padding: '10px 20px',
-      minHeight: '120px',
+      padding: isMobile ? '5px 10px' : '10px 20px',
+      minHeight: isMobile ? '100px' : '120px',
       overflowX: 'auto',
-      gap: '0'
+      gap: '0',
+      WebkitOverflowScrolling: 'touch' // iOS 平滑滚动
     }}>
       {sortedCards.map((card, index) => {
         const selected = isSelected(card);
-        // 计算重叠偏移，让牌有扇形展开效果
-        const marginLeft = index === 0 ? 0 : '-35px';
         
         return (
           <div
             key={card.id}
             style={{
-              marginLeft,
+              marginLeft: index === 0 ? 0 : overlap,
               transition: 'transform 0.2s ease',
-              transform: selected ? 'translateY(-15px)' : 'translateY(0)',
-              zIndex: selected ? 100 : index
+              transform: selected ? 'translateY(-20px)' : 'translateY(0)',
+              zIndex: selected ? 100 : index,
+              flexShrink: 0 // 防止牌被压缩
             }}
           >
             <Card

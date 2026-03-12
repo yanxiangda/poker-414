@@ -422,22 +422,30 @@ io.on('connection', (socket) => {
 
   // 重排序手牌
   socket.on('reorderCards', (data) => {
+    console.log('🔄 收到理牌请求:', socket.id, data.cards.map(c => c.value));
     const playerInfo = players.get(socket.id);
-    if (!playerInfo) return;
+    if (!playerInfo) {
+      console.log('❌ 玩家信息不存在');
+      return;
+    }
     
     const room = rooms.get(playerInfo.roomId);
-    if (!room || room.gameState !== 'playing') return;
+    if (!room || room.gameState !== 'playing') {
+      console.log('❌ 房间不存在或游戏未进行中，gameState:', room?.gameState);
+      return;
+    }
     
     const playerIndex = room.getPlayerIndex(socket.id);
-    // 允许任何时候排序，不仅限于自己的回合
-    // if (playerIndex !== room.currentPlayer) return;
+    console.log('👤 玩家索引:', playerIndex, '当前手牌:', room.hands[playerIndex].map(c => c.value));
     
     // 更新手牌顺序
     room.hands[playerIndex] = data.cards;
-    console.log('✅ 手牌顺序已更新:', data.cards.length, '张');
+    console.log('✅ 手牌顺序已更新:', room.hands[playerIndex].map(c => c.value));
     
     // 返回 gameState 让客户端更新显示
-    socket.emit('gameUpdate', room.toGameState());
+    const gameState = room.toGameState();
+    console.log('📤 返回 gameState，手牌:', gameState.hands[playerIndex].map(c => c.value));
+    socket.emit('gameUpdate', gameState);
   });
 
   // 过

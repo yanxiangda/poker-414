@@ -14,7 +14,6 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
   
   // 当外部 cards 变化时，更新 cardOrder（添加新牌或移除不存在的牌）
   useEffect(() => {
-    const currentIds = new Set(cardOrder);
     const newCardIds = cards.map(c => c.id);
     
     // 如果是新发牌（cardOrder 为空或牌数变化），按大小排序
@@ -27,17 +26,29 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
       setCardOrder(sortedIds);
       console.log('🎴 新发牌，自动排序:', sortedIds.length, '张');
     } else {
-      // 否则只更新变化的牌
-      let newOrder = cardOrder.filter(id => newCardIds.includes(id));
+      // 检查牌的 ID 是否完全匹配（判断是否是理牌操作）
+      const currentIdsSet = new Set(cardOrder);
+      const newIdsSet = new Set(newCardIds);
+      const sameCards = cardOrder.length === newCardIds.length && 
+                        cardOrder.every(id => newIdsSet.has(id));
       
-      // 添加新牌到末尾
-      newCardIds.forEach(id => {
-        if (!currentIds.has(id)) {
-          newOrder.push(id);
-        }
-      });
-      
-      setCardOrder(newOrder);
+      if (sameCards) {
+        // 牌相同但顺序可能变了（理牌），按 cards 数组的新顺序更新
+        setCardOrder(newCardIds);
+        console.log('🎴 理牌，更新顺序:', newCardIds.length, '张');
+      } else {
+        // 牌有变化（添加/移除）
+        let newOrder = cardOrder.filter(id => newIdsSet.has(id));
+        
+        // 添加新牌到末尾
+        newCardIds.forEach(id => {
+          if (!currentIdsSet.has(id)) {
+            newOrder.push(id);
+          }
+        });
+        
+        setCardOrder(newOrder);
+      }
     }
   }, [cards]);
   

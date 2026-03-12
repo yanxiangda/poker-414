@@ -181,6 +181,8 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     return selectedCards?.some(c => c.id === card.id) || localSelected.includes(card.id);
   };
   
+  const isDisabled = !canPlay && isPlayer;
+  
   return (
     <div 
       ref={handRef}
@@ -198,13 +200,15 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
         userSelect: 'none',
         touchAction: 'none',
         position: 'relative',
-        zIndex: 1
+        zIndex: 1,
+        // 统一应用禁用效果，避免重叠处变亮
+        opacity: isDisabled ? 0.6 : 1,
+        filter: isDisabled ? 'grayscale(50%) brightness(80%)' : 'none'
       }}
     >
       {orderedCards.map((card, index) => {
         const selected = isSelected(card);
         const isDragging = draggedIndex === index;
-        const isDisabled = !canPlay && isPlayer;
         
         return (
           <div
@@ -226,9 +230,8 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
               transform: selected ? 'translateY(-20px)' : isDragging ? 'translateY(-30px) scale(1.05)' : 'translateY(0)',
               zIndex: selected || isDragging ? 100 : index,
               flexShrink: 0,
-              opacity: isDragging ? 0.7 : isDisabled ? 0.6 : 1,
-              cursor: isDisabled ? 'not-allowed' : (isPlayer ? 'grab' : 'default'),
-              filter: isDisabled ? 'grayscale(50%) brightness(80%)' : 'none'
+              opacity: isDragging ? 0.7 : 1,
+              cursor: isDisabled ? 'not-allowed' : (isPlayer ? 'grab' : 'default')
             }}
           >
             <Card

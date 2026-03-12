@@ -7,10 +7,10 @@ import Card from './Card.jsx';
 export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPlayer, windowWidth, onReorder }) {
   const [localSelected, setLocalSelected] = useState([]);
   const [draggedIndex, setDraggedIndex] = useState(null);
-  const [dragOffset, setDragOffset] = useState(0); // 鼠标相对于牌左边缘的偏移
   // 使用用户自定义的顺序，如果没有则用原始顺序
   const [cardOrder, setCardOrder] = useState(cards.map(c => c.id));
   const handRef = useRef(null);
+  const dragOffsetRef = useRef(0); // 鼠标相对于手牌容器的位置
   const windowW = windowWidth || (typeof window !== 'undefined' ? window.innerWidth : 1024);
   
   // 当外部 cards 变化时，更新 cardOrder（添加新牌或移除不存在的牌）
@@ -71,22 +71,12 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
   const isSmallMobile = windowW < 400;
   const overlapCss = isSmallMobile ? '-8px' : isMobile ? '-12px' : '-18px';
   
-  // 拖拽移动（使用 ref 保存最新状态）
-  const draggedIndexRef = useRef(null);
+  // 拖拽移动（使用 ref 保存当前手牌顺序）
   const cardOrderRef = useRef(cardOrder);
-  const dragOffsetRef = useRef(0);
-  
-  useEffect(() => {
-    draggedIndexRef.current = draggedIndex;
-  }, [draggedIndex]);
   
   useEffect(() => {
     cardOrderRef.current = cardOrder;
   }, [cardOrder]);
-  
-  useEffect(() => {
-    dragOffsetRef.current = dragOffset;
-  }, [dragOffset]);
   
   // 开始拖拽
   const handleMouseDown = (e, index) => {
@@ -94,39 +84,42 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     e.preventDefault();
     
     const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-    const rect = e.currentTarget.getBoundingClientRect();
+    const handRect = handRef.current.getBoundingClientRect();
     
-    // 记录鼠标相对于牌左边缘的偏移
-    const offset = clientX - rect.left;
-    setDragOffset(offset);
+    // 记录鼠标相对于手牌容器的位置
+    const startX = clientX - handRect.left;
+    dragOffsetRef.current = startX;
     
     setDraggedIndex(index);
-    console.log('🃏 开始拖拽索引:', index, '偏移:', offset);
   };
   
-  // 拖拽移动
-  const handleMouseMove = React.useCallback((e) => {
-    const currentIndex = draggedIndexRef.current;
+  // 拖拽移动 - 直接在事件处理中使用最新值
+  const handleMouseMove = (e) => {
+    const currentIndex = draggedIndex;
     if (currentIndex === null || !handRef.current) return;
-    e.preventDefault();
     
     const clientX = e.type.includes('touch') ? (e.touches[0]?.clientX || 0) : e.clientX;
     const handRect = handRef.current.getBoundingClientRect();
-    const scrollLeft = handRef.current.scrollLeft || 0;
     
-    // 计算鼠标位置（减去偏移量，让牌中心跟随鼠标）
-    const currentCardWidth = isSmallMobile ? 42 : isMobile ? 48 : 60;
-    const relativeX = clientX - handRect.left + scrollLeft - dragOffsetRef.current;
+    // 计算鼠标移动的距离
+    const currentX = clientX - handRect.left;
+    const deltaX = currentX - dragOffsetRef.current;
     
     // 使用实际的牌宽度和重叠计算
+    const currentCardWidth = isSmallMobile ? 42 : isMobile ? 48 : 60;
     const currentOverlap = isSmallMobile ? 8 : isMobile ? 12 : 18;
     const stepWidth = currentCardWidth - currentOverlap;
     
-    // 计算目标索引
-    const newIndex = Math.round(relativeX / stepWidth);
+    // 计算移动了多少个位置（至少移动半个牌宽才交换）
+    const steps = Math.floor(Math.abs(deltaX) / stepWidth);
+    if (steps === 0) return;
+    
+    // 确定移动方向
+    const direction = deltaX > 0 ? 1 : -1;
+    const newIndex = currentIndex + direction * steps;
     const clampedIndex = Math.max(0, Math.min(newIndex, cardOrderRef.current.length - 1));
     
-    if (clampedIndex !== currentIndex && clampedIndex >= 0) {
+    if (clampedIndex !== currentIndex) {
       // 交换卡片顺序
       const newOrder = [...cardOrderRef.current];
       const temp = newOrder[currentIndex];
@@ -134,15 +127,16 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
       newOrder[clampedIndex] = temp;
       
       setCardOrder(newOrder);
-      draggedIndexRef.current = clampedIndex;
       setDraggedIndex(clampedIndex);
+      
+      // 重置偏移量，避免连续交换
+      dragOffsetRef.current = currentX;
     }
-  }, [isSmallMobile, isMobile]);
+  };
   
   // 结束拖拽
-  const handleMouseUp = React.useCallback(() => {
-    const currentIndex = draggedIndexRef.current;
-    if (currentIndex !== null) {
+  const handleMouseUp = () => {
+    if (draggedIndex !== null) {
       console.log('✅ 拖拽结束，发送新顺序到服务器');
       if (onReorder) {
         const newCards = cardOrderRef.current.map(id => cards.find(c => c.id === id)).filter(Boolean);
@@ -150,7 +144,7 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
       }
     }
     setDraggedIndex(null);
-  }, [onReorder, cards]);
+  };
   
   // 全局事件监听
   useEffect(() => {
@@ -167,7 +161,7 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
         document.removeEventListener('touchend', handleMouseUp);
       };
     }
-  }, [draggedIndex, handleMouseMove, handleMouseUp]);
+  }, [draggedIndex]);
   
   const handleClick = (card) => {
     if (!isPlayer || !canPlay) return;

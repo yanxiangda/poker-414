@@ -188,7 +188,8 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
         alignItems: 'center',
         padding: '10px 20px',
         backgroundColor: 'rgba(0,0,0,0.3)',
-        flexShrink: 0
+        flexShrink: 0,
+        position: 'relative'
       }}>
         <button
           onClick={handleLeaveGame}
@@ -199,18 +200,34 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
             border: 'none',
             borderRadius: '20px',
             fontSize: '14px',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            zIndex: 10
           }}
         >
           ← 退出
         </button>
+        
+        {/* 标题居中 */}
+        <div style={{
+          position: 'absolute',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          fontSize: 'clamp(16px, 3vw, 24px)',
+          fontWeight: 'bold',
+          color: 'rgba(255,255,255,0.6)',
+          textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+          whiteSpace: 'nowrap'
+        }}>
+          🃏 东北抛幺 414
+        </div>
         
         <div style={{
           padding: '8px 16px',
           backgroundColor: 'rgba(255,255,255,0.2)',
           color: 'white',
           borderRadius: '20px',
-          fontSize: '14px'
+          fontSize: '14px',
+          zIndex: 10
         }}>
           🏠 {roomId}
         </div>
@@ -297,25 +314,16 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '20px',
+          gap: '15px',
           padding: '20px'
         }}>
           <div style={{
-            fontSize: 'clamp(20px, 4vw, 32px)',
-            fontWeight: 'bold',
-            color: 'rgba(255,255,255,0.3)',
-            textShadow: '0 2px 4px rgba(0,0,0,0.5)'
-          }}>
-            🃏 东北抛幺 414
-          </div>
-          
-          <div style={{
             backgroundColor: '#fff',
             borderRadius: '16px',
-            padding: isMobile ? '12px 20px' : '20px 40px',
+            padding: isMobile ? '10px 15px' : '15px 30px',
             boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
             width: '100%',
-            minHeight: isMobile ? '120px' : '160px',
+            minHeight: isMobile ? '80px' : '100px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

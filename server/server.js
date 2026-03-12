@@ -258,6 +258,18 @@ io.on('connection', (socket) => {
       return;
     }
     
+    // 自动添加机器人到 6 人
+    const botNames = ['机器人 1 号', '机器人 2 号', '机器人 3 号', '机器人 4 号', '机器人 5 号', '机器人 6 号'];
+    while (room.players.length < room.maxPlayers) {
+      const existingBots = room.getBots().length;
+      const botName = botNames[existingBots] || `机器人${existingBots + 1}号`;
+      room.addBot(botName);
+      console.log(`🤖 自动添加机器人：${botName} 到房间 ${room.id}`);
+    }
+    
+    // 通知所有客户端机器人已加入
+    io.to(room.id).emit('playerJoined', room.toGameState());
+    
     startGame(room);
   });
 

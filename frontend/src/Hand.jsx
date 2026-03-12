@@ -86,7 +86,7 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
   const handleMouseDown = (e, index) => {
     if (!isPlayer) return;
     e.preventDefault();
-    e.stopPropagation();
+    // 不要 stopPropagation，让事件能正常传播到 document
     setDraggedIndex(index);
     console.log('🃏 开始拖拽索引:', index, '牌:', orderedCards[index].value);
   };
@@ -100,12 +100,17 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     const clientX = e.type.includes('touch') ? (e.touches[0]?.clientX || 0) : e.clientX;
     const handRect = handRef.current.getBoundingClientRect();
     const scrollLeft = handRef.current.scrollLeft || 0;
-    const relativeX = clientX - handRect.left + scrollLeft;
     
-    // 计算目标索引
+    // 计算鼠标在手牌容器内的相对位置（考虑第一张牌的偏移）
     const cardWidth = isSmallMobile ? 42 : isMobile ? 48 : 60;
     const overlap = isSmallMobile ? 15 : isMobile ? 25 : 35;
     const stepWidth = cardWidth - overlap;
+    
+    // 计算相对位置，减去第一张牌的左偏移和半张牌宽度（让牌中心对齐鼠标）
+    const firstCardOffset = cardWidth / 2;
+    const relativeX = clientX - handRect.left + scrollLeft - firstCardOffset;
+    
+    // 计算目标索引
     const newIndex = Math.round(relativeX / stepWidth);
     const clampedIndex = Math.max(0, Math.min(newIndex, cardOrderRef.current.length - 1));
     
@@ -180,10 +185,14 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
         padding: isMobile ? '3px 8px 0' : '5px 15px 0',
         minHeight: isSmallMobile ? '70px' : isMobile ? '77px' : '90px',
         overflowX: 'auto',
+        overflowY: 'visible',
         gap: '0',
         WebkitOverflowScrolling: 'touch',
         flexShrink: 0,
-        userSelect: 'none'
+        userSelect: 'none',
+        touchAction: 'none',
+        position: 'relative',
+        zIndex: 1
       }}
     >
       {orderedCards.map((card, index) => {

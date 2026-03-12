@@ -7,6 +7,7 @@ import Card from './Card.jsx';
 export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPlayer, windowWidth, onReorder }) {
   const [localSelected, setLocalSelected] = useState([]);
   const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dragOffset, setDragOffset] = useState(0); // 鼠标相对于牌左边缘的偏移
   // 使用用户自定义的顺序，如果没有则用原始顺序
   const [cardOrder, setCardOrder] = useState(cards.map(c => c.id));
   const handRef = useRef(null);
@@ -73,6 +74,7 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
   // 拖拽移动（使用 ref 保存最新状态）
   const draggedIndexRef = useRef(null);
   const cardOrderRef = useRef(cardOrder);
+  const dragOffsetRef = useRef(0);
   
   useEffect(() => {
     draggedIndexRef.current = draggedIndex;
@@ -82,13 +84,24 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     cardOrderRef.current = cardOrder;
   }, [cardOrder]);
   
+  useEffect(() => {
+    dragOffsetRef.current = dragOffset;
+  }, [dragOffset]);
+  
   // 开始拖拽
   const handleMouseDown = (e, index) => {
     if (!isPlayer) return;
     e.preventDefault();
-    // 不要 stopPropagation，让事件能正常传播到 document
+    
+    const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+    const rect = e.currentTarget.getBoundingClientRect();
+    
+    // 记录鼠标相对于牌左边缘的偏移
+    const offset = clientX - rect.left;
+    setDragOffset(offset);
+    
     setDraggedIndex(index);
-    console.log('🃏 开始拖拽索引:', index, '牌:', orderedCards[index].value);
+    console.log('🃏 开始拖拽索引:', index, '偏移:', offset);
   };
   
   // 拖拽移动
@@ -101,16 +114,16 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     const handRect = handRef.current.getBoundingClientRect();
     const scrollLeft = handRef.current.scrollLeft || 0;
     
-    // 计算鼠标在手牌容器内的相对位置
-    const relativeX = clientX - handRect.left + scrollLeft;
+    // 计算鼠标位置（减去偏移量，让牌中心跟随鼠标）
+    const currentCardWidth = isSmallMobile ? 42 : isMobile ? 48 : 60;
+    const relativeX = clientX - handRect.left + scrollLeft - dragOffsetRef.current;
     
     // 使用实际的牌宽度和重叠计算
-    const currentCardWidth = isSmallMobile ? 42 : isMobile ? 48 : 60;
     const currentOverlap = isSmallMobile ? 8 : isMobile ? 12 : 18;
     const stepWidth = currentCardWidth - currentOverlap;
     
-    // 计算目标索引（从 0 开始，每 stepWidth 像素一个位置）
-    const newIndex = Math.floor(relativeX / stepWidth);
+    // 计算目标索引
+    const newIndex = Math.round(relativeX / stepWidth);
     const clampedIndex = Math.max(0, Math.min(newIndex, cardOrderRef.current.length - 1));
     
     if (clampedIndex !== currentIndex && clampedIndex >= 0) {

@@ -82,7 +82,6 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
   const [selectedCards, setSelectedCards] = useState([]);
   const [windowSize, setWindowSize] = useState({ width: typeof window !== 'undefined' ? window.innerWidth : 1024, height: typeof window !== 'undefined' ? window.innerHeight : 768 });
   const [animatingCards, setAnimatingCards] = useState(null); // 正在动画的牌
-  const [lastPlayedCards, setLastPlayedCards] = useState(null); // 用于检测新出的牌
   
   // 监听窗口大小变化，实时适配屏幕
   React.useEffect(() => {
@@ -94,20 +93,6 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
     window.addEventListener('resize', updateSize);
     return () => window.removeEventListener('resize', updateSize);
   }, []);
-  
-  // 检测新出的牌，触发动画
-  React.useEffect(() => {
-    if (gameState?.lastPlayedCards && gameState.lastPlayedCards.length > 0) {
-      const newCardsKey = gameState.lastPlayedCards.map(c => c.id).join('-');
-      const lastCardsKey = lastPlayedCards ? lastPlayedCards.map(c => c.id).join('-') : '';
-      
-      if (newCardsKey !== lastCardsKey) {
-        // 有新的牌打出，触发动画
-        setAnimatingCards([...gameState.lastPlayedCards]);
-        setLastPlayedCards([...gameState.lastPlayedCards]);
-      }
-    }
-  }, [gameState?.lastPlayedCards]);
 
   const handleLeaveGame = () => {
     if (window.confirm('确定要退出游戏返回主页吗？')) {
@@ -429,6 +414,10 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
                   onClick={() => {
                     console.log('出牌:', selectedCards);
                     if (socket) {
+                      // 触发动画
+                      if (selectedCards.length > 0) {
+                        setAnimatingCards([...selectedCards]);
+                      }
                       socket.emit('playCards', { cards: selectedCards });
                       setSelectedCards([]);
                     } else {

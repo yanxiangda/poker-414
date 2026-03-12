@@ -57,16 +57,26 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
   // 放下卡片
   const handleDrop = (e, targetIndex) => {
     e.preventDefault();
-    if (!draggedCard || draggedCard.index === targetIndex) {
+    if (!draggedCard) {
       setDragOverIndex(null);
       return;
     }
     
-    // 交换卡片位置
+    // 在排序后的数组中找到源位置和目标位置
+    const sourceIndex = sortedCards.findIndex(c => c.id === draggedCard.card.id);
+    if (sourceIndex === targetIndex) {
+      setDragOverIndex(null);
+      return;
+    }
+    
+    // 在原始 cards 数组中交换位置
     const newCards = [...cards];
-    const sourceIndex = cards.findIndex(c => c.id === draggedCard.card.id);
-    const [removed] = newCards.splice(sourceIndex, 1);
-    newCards.splice(targetIndex, 0, removed);
+    const sourceRealIndex = newCards.findIndex(c => c.id === draggedCard.card.id);
+    const targetCard = sortedCards[targetIndex];
+    const targetRealIndex = newCards.findIndex(c => c.id === targetCard.id);
+    
+    // 交换两张牌的位置
+    [newCards[sourceRealIndex], newCards[targetRealIndex]] = [newCards[targetRealIndex], newCards[sourceRealIndex]];
     
     // 通知父组件重新排序
     if (onReorder) {

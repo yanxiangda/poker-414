@@ -397,7 +397,8 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
               isPlayer={true}
               windowWidth={windowSize.width}
               onReorder={(newOrder) => {
-                // 更新手牌顺序（本地）
+                // 立即更新本地状态（视觉反馈）
+                // 服务器会返回更新后的 gameState
                 socket.emit('reorderCards', { cards: newOrder });
               }}
             />

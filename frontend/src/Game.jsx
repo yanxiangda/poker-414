@@ -287,12 +287,18 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
 
         {/* 中央 - 出牌区 */}
         <div style={{
-          flex: 1,
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '100%',
+          maxWidth: '800px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '20px'
+          gap: '20px',
+          padding: '20px'
         }}>
           <div style={{
             fontSize: 'clamp(20px, 4vw, 32px)',
@@ -308,14 +314,15 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
             borderRadius: '16px',
             padding: isMobile ? '12px 20px' : '20px 40px',
             boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-            minHeight: isMobile ? '90px' : '120px',
+            width: '100%',
+            minHeight: isMobile ? '120px' : '160px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             position: 'relative'
           }}>
             {gameState.lastPlayedCards && gameState.lastPlayedCards.length > 0 ? (
-              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
                 {gameState.lastPlayedCards.map(card => (
                   <Card key={card.id} card={card} windowWidth={windowSize.width} />
                 ))}
@@ -328,13 +335,16 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
               <div style={{
                 position: 'absolute',
                 top: '-15px',
+                left: '50%',
+                transform: 'translateX(-50%)',
                 backgroundColor: '#FFD700',
                 color: '#000',
                 padding: '4px 16px',
                 borderRadius: '12px',
                 fontSize: '14px',
                 fontWeight: 'bold',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                whiteSpace: 'nowrap'
               }}>
                 ✨ 借光！
               </div>
@@ -345,6 +355,7 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
             backgroundColor: 'rgba(0,0,0,0.4)',
             borderRadius: '12px',
             padding: '8px 15px',
+            width: '100%',
             maxWidth: '600px',
             height: '60px', // 固定高度
             overflowY: 'auto', // 内部滚动

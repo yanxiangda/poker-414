@@ -40,7 +40,6 @@ export default function Card({ card, onClick, selected, disabled, small, windowW
     borderRadius: '8px',
     margin: '2px',
     cursor: disabled ? 'default' : 'pointer',
-    opacity: disabled ? 0.7 : 1,
     transform: selected ? 'translateY(-15px)' : 'none',
     boxShadow: selected 
       ? '0 -5px 15px rgba(0,0,0,0.3), 0 0 0 2px #ffd700' 

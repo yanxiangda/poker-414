@@ -17,17 +17,28 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     const currentIds = new Set(cardOrder);
     const newCardIds = cards.map(c => c.id);
     
-    // 移除不存在的牌
-    let newOrder = cardOrder.filter(id => newCardIds.includes(id));
-    
-    // 添加新牌到末尾
-    newCardIds.forEach(id => {
-      if (!currentIds.has(id)) {
-        newOrder.push(id);
-      }
-    });
-    
-    setCardOrder(newOrder);
+    // 如果是新发牌（cardOrder 为空或牌数变化），按大小排序
+    if (cardOrder.length === 0 || cardOrder.length !== cards.length) {
+      // 按牌面大小排序的辅助函数
+      const cardOrderValue = {4:0,5:1,6:2,7:3,8:4,9:5,10:6,J:7,Q:8,K:9,A:10,2:11,3:12,SJ:13,BJ:14};
+      const sortedIds = [...cards]
+        .sort((a, b) => (cardOrderValue[b.value] || 0) - (cardOrderValue[a.value] || 0))
+        .map(c => c.id);
+      setCardOrder(sortedIds);
+      console.log('🎴 新发牌，自动排序:', sortedIds.length, '张');
+    } else {
+      // 否则只更新变化的牌
+      let newOrder = cardOrder.filter(id => newCardIds.includes(id));
+      
+      // 添加新牌到末尾
+      newCardIds.forEach(id => {
+        if (!currentIds.has(id)) {
+          newOrder.push(id);
+        }
+      });
+      
+      setCardOrder(newOrder);
+    }
   }, [cards]);
   
   // 当外部 selectedCards 清空时，同步清空本地选中状态

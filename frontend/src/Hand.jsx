@@ -101,17 +101,16 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     const handRect = handRef.current.getBoundingClientRect();
     const scrollLeft = handRef.current.scrollLeft || 0;
     
-    // 计算鼠标在手牌容器内的相对位置（考虑第一张牌的偏移）
-    const cardWidth = isSmallMobile ? 42 : isMobile ? 48 : 60;
-    const overlap = isSmallMobile ? 15 : isMobile ? 25 : 35;
-    const stepWidth = cardWidth - overlap;
+    // 计算鼠标在手牌容器内的相对位置
+    const relativeX = clientX - handRect.left + scrollLeft;
     
-    // 计算相对位置，减去第一张牌的左偏移和半张牌宽度（让牌中心对齐鼠标）
-    const firstCardOffset = cardWidth / 2;
-    const relativeX = clientX - handRect.left + scrollLeft - firstCardOffset;
+    // 使用实际的牌宽度和重叠计算
+    const currentCardWidth = isSmallMobile ? 42 : isMobile ? 48 : 60;
+    const currentOverlap = isSmallMobile ? 8 : isMobile ? 12 : 18;
+    const stepWidth = currentCardWidth - currentOverlap;
     
-    // 计算目标索引
-    const newIndex = Math.round(relativeX / stepWidth);
+    // 计算目标索引（从 0 开始，每 stepWidth 像素一个位置）
+    const newIndex = Math.floor(relativeX / stepWidth);
     const clampedIndex = Math.max(0, Math.min(newIndex, cardOrderRef.current.length - 1));
     
     if (clampedIndex !== currentIndex && clampedIndex >= 0) {

@@ -433,101 +433,105 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
           </div>
           
           {/* 出牌按钮和理牌按钮 - 放在手牌区域外面，确保可见 */}
-          {isMyTurn && (
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: isMobile ? '8px' : '15px',
-              padding: isMobile ? '6px 8px' : '10px 15px',
-              backgroundColor: 'rgba(0,0,0,0.5)',
-              flexWrap: 'wrap',
-              flexShrink: 0,
-              alignItems: 'center'
-            }}>
-              {/* 理牌按钮 */}
-              <button
-                onClick={() => {
-                  // 按牌面大小排序
-                  const order = {'4':0,'5':1,'6':2,'7':3,'8':4,'9':5,'10':6,'J':7,'Q':8,'K':9,'A':10,'2':11,'3':12,'SJ':13,'BJ':14};
-                  const sorted = [...myHand].sort((a, b) => {
-                    const orderA = order[a.value] !== undefined ? order[a.value] : 0;
-                    const orderB = order[b.value] !== undefined ? order[b.value] : 0;
-                    return orderB - orderA;
-                  });
-                  console.log('🎴 理牌：按大小排序', sorted.map(c => c.value));
-                  // 立即更新本地顺序（视觉反馈）
-                  socket.emit('reorderCards', { cards: sorted });
-                  // 清空选中状态
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: isMobile ? '8px' : '15px',
+            padding: isMobile ? '6px 8px' : '10px 15px',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            flexWrap: 'wrap',
+            flexShrink: 0,
+            alignItems: 'center'
+          }}>
+            {/* 理牌按钮 - 始终可用 */}
+            <button
+              onClick={() => {
+                // 按牌面大小排序
+                const order = {'4':0,'5':1,'6':2,'7':3,'8':4,'9':5,'10':6,'J':7,'Q':8,'K':9,'A':10,'2':11,'3':12,'SJ':13,'BJ':14};
+                const sorted = [...myHand].sort((a, b) => {
+                  const orderA = order[a.value] !== undefined ? order[a.value] : 0;
+                  const orderB = order[b.value] !== undefined ? order[b.value] : 0;
+                  return orderB - orderA;
+                });
+                console.log('🎴 理牌：按大小排序', sorted.map(c => c.value));
+                // 立即更新本地顺序（视觉反馈）
+                socket.emit('reorderCards', { cards: sorted });
+                // 清空选中状态
+                setSelectedCards([]);
+              }}
+              style={{
+                padding: isMobile ? '10px 24px' : '14px 40px',
+                fontSize: isMobile ? '16px' : '18px',
+                fontWeight: 'bold',
+                backgroundColor: '#2196F3',
+                color: 'white',
+                border: 'none',
+                borderRadius: '30px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(33, 150, 243, 0.4)',
+                minWidth: '100px'
+              }}
+            >
+              🎴 理牌
+            </button>
+            
+            {/* 出牌按钮 - 自己的回合才可用 */}
+            <button 
+              onClick={() => {
+                console.log('出牌:', selectedCards);
+                if (socket) {
+                  // 触发动画
+                  if (selectedCards.length > 0) {
+                    setAnimatingCards([...selectedCards]);
+                  }
+                  socket.emit('playCards', { cards: selectedCards });
                   setSelectedCards([]);
-                }}
-                style={{
-                  padding: isMobile ? '10px 24px' : '14px 40px',
-                  fontSize: isMobile ? '16px' : '18px',
-                  fontWeight: 'bold',
-                  backgroundColor: '#2196F3',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '30px',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 15px rgba(33, 150, 243, 0.4)',
-                  minWidth: '100px'
-                }}
-              >
-                🎴 理牌
-              </button>
-                <button 
-                  onClick={() => {
-                    console.log('出牌:', selectedCards);
-                    if (socket) {
-                      // 触发动画
-                      if (selectedCards.length > 0) {
-                        setAnimatingCards([...selectedCards]);
-                      }
-                      socket.emit('playCards', { cards: selectedCards });
-                      setSelectedCards([]);
-                    } else {
-                      alert('Socket 未连接！');
-                    }
-                  }}
-                  disabled={selectedCards.length === 0 || !canPlayCards}
-                  style={{ 
-                    padding: isMobile ? '10px 24px' : '14px 40px', 
-                    fontSize: isMobile ? '16px' : '18px', 
-                    fontWeight: 'bold',
-                    cursor: (selectedCards.length > 0 && canPlayCards) ? 'pointer' : 'not-allowed',
-                    backgroundColor: (selectedCards.length > 0 && canPlayCards) ? '#4CAF50' : '#666',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '30px',
-                    boxShadow: (selectedCards.length > 0 && canPlayCards) ? '0 4px 15px rgba(76, 175, 80, 0.4)' : 'none',
-                    minWidth: '120px'
-                  }}
-                >
-                  {selectedCards.length === 0 ? '选牌' : (canPlayCards ? `出牌 (${selectedCards.length}张)` : '❌ 管不起')}
-                </button>
-                <button 
-                  onClick={() => {
-                    console.log('过');
-                    if (socket) socket.emit('pass');
-                  }}
-                  disabled={gameState.lastPlayedCards?.length === 0}
-                  style={{ 
-                    padding: isMobile ? '10px 24px' : '14px 40px', 
-                    fontSize: isMobile ? '16px' : '18px', 
-                    fontWeight: 'bold',
-                    cursor: gameState.lastPlayedCards?.length > 0 ? 'pointer' : 'not-allowed',
-                    backgroundColor: gameState.lastPlayedCards?.length > 0 ? '#ff9800' : '#666',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '30px',
-                    boxShadow: gameState.lastPlayedCards?.length > 0 ? '0 4px 15px rgba(255, 152, 0, 0.4)' : 'none',
-                    minWidth: '80px'
-                  }}
-                >
-                  过
-                </button>
-              </div>
-            )}
+                } else {
+                  alert('Socket 未连接！');
+                }
+              }}
+              disabled={!isMyTurn || selectedCards.length === 0 || !canPlayCards}
+              style={{ 
+                padding: isMobile ? '10px 24px' : '14px 40px', 
+                fontSize: isMobile ? '16px' : '18px', 
+                fontWeight: 'bold',
+                cursor: (isMyTurn && selectedCards.length > 0 && canPlayCards) ? 'pointer' : 'not-allowed',
+                backgroundColor: (isMyTurn && selectedCards.length > 0 && canPlayCards) ? '#4CAF50' : '#666',
+                color: 'white',
+                border: 'none',
+                borderRadius: '30px',
+                boxShadow: (isMyTurn && selectedCards.length > 0 && canPlayCards) ? '0 4px 15px rgba(76, 175, 80, 0.4)' : 'none',
+                minWidth: '120px',
+                opacity: !isMyTurn ? 0.5 : 1
+              }}
+            >
+              {!isMyTurn ? '等待中...' : (selectedCards.length === 0 ? '选牌' : (canPlayCards ? `出牌 (${selectedCards.length}张)` : '❌ 管不起'))}
+            </button>
+            
+            {/* 过按钮 - 自己的回合才可用 */}
+            <button 
+              onClick={() => {
+                console.log('过');
+                if (socket) socket.emit('pass');
+              }}
+              disabled={!isMyTurn || gameState.lastPlayedCards?.length === 0}
+              style={{ 
+                padding: isMobile ? '10px 24px' : '14px 40px', 
+                fontSize: isMobile ? '16px' : '18px', 
+                fontWeight: 'bold',
+                cursor: (isMyTurn && gameState.lastPlayedCards?.length > 0) ? 'pointer' : 'not-allowed',
+                backgroundColor: (isMyTurn && gameState.lastPlayedCards?.length > 0) ? '#ff9800' : '#666',
+                color: 'white',
+                border: 'none',
+                borderRadius: '30px',
+                boxShadow: (isMyTurn && gameState.lastPlayedCards?.length > 0) ? '0 4px 15px rgba(255, 152, 0, 0.4)' : 'none',
+                minWidth: '80px',
+                opacity: !isMyTurn ? 0.5 : 1
+              }}
+            >
+              {!isMyTurn ? '等待中...' : '过'}
+            </button>
+          </div>
         </div>
       </div>
       

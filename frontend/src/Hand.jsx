@@ -181,8 +181,6 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     return selectedCards?.some(c => c.id === card.id) || localSelected.includes(card.id);
   };
   
-  const isDisabled = !canPlay && isPlayer;
-  
   return (
     <div 
       ref={handRef}
@@ -200,10 +198,7 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
         userSelect: 'none',
         touchAction: 'none',
         position: 'relative',
-        zIndex: 1,
-        // 统一应用禁用效果，避免重叠处变亮
-        opacity: isDisabled ? 0.6 : 1,
-        filter: isDisabled ? 'grayscale(50%) brightness(80%)' : 'none'
+        zIndex: 1
       }}
     >
       {orderedCards.map((card, index) => {
@@ -213,14 +208,11 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
         return (
           <div
             key={card.id}
-            onMouseDown={(e) => {
-              if (!isDisabled) handleMouseDown(e, index);
-            }}
-            onTouchStart={(e) => {
-              if (!isDisabled) handleMouseDown(e, index);
-            }}
+            onMouseDown={(e) => handleMouseDown(e, index)}
+            onTouchStart={(e) => handleMouseDown(e, index)}
             onClick={(e) => {
-              if (!isDisabled) {
+              // 只在可以出牌时允许点击选牌
+              if (canPlay && isPlayer) {
                 handleClick(card);
               }
             }}
@@ -231,14 +223,14 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
               zIndex: selected || isDragging ? 100 : index,
               flexShrink: 0,
               opacity: isDragging ? 0.7 : 1,
-              cursor: isDisabled ? 'not-allowed' : (isPlayer ? 'grab' : 'default')
+              cursor: isPlayer ? 'grab' : 'default'
             }}
           >
             <Card
               card={card}
               selected={selected}
               onClick={() => {}}
-              disabled={isDisabled}
+              disabled={!canPlay && isPlayer}
               small={false}
               windowWidth={windowW}
             />

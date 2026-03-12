@@ -396,6 +396,10 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
               canPlay={isMyTurn}
               isPlayer={true}
               windowWidth={windowSize.width}
+              onReorder={(newOrder) => {
+                // 更新手牌顺序（本地）
+                socket.emit('reorderCards', { cards: newOrder });
+              }}
             />
           </div>
           

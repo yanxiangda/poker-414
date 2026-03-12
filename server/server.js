@@ -420,6 +420,24 @@ io.on('connection', (socket) => {
     }
   });
 
+  // 重排序手牌
+  socket.on('reorderCards', (data) => {
+    const playerInfo = players.get(socket.id);
+    if (!playerInfo) return;
+    
+    const room = rooms.get(playerInfo.roomId);
+    if (!room || room.gameState !== 'playing') return;
+    
+    const playerIndex = room.getPlayerIndex(socket.id);
+    if (playerIndex !== room.currentPlayer) return; // 只在玩家回合允许排序
+    
+    // 更新手牌顺序
+    room.hands[playerIndex] = data.cards;
+    
+    // 只通知发送者（其他玩家不需要知道手牌顺序）
+    socket.emit('gameUpdate', room.toGameState());
+  });
+
   // 过
   socket.on('pass', () => {
     const playerInfo = players.get(socket.id);

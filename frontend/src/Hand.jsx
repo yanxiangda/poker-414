@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import Card from './Card.jsx';
 import { CARD_ORDER } from './game/deck.js';
 
 /**
- * 手牌组件 - 斗地主风格横向展开，响应式适配
+ * 手牌组件 - 斗地主风格横向展开，响应式适配，支持拖拽排序
  */
-export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPlayer, windowWidth }) {
+export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPlayer, windowWidth, onReorder }) {
   const [localSelected, setLocalSelected] = React.useState([]);
+  const [draggedCard, setDraggedCard] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+  const handRef = useRef(null);
   const windowW = windowWidth || (typeof window !== 'undefined' ? window.innerWidth : 1024);
   
   // 当外部 selectedCards 清空时，同步清空本地选中状态
@@ -22,6 +25,57 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
   
   // 按大小排序
   const sortedCards = [...cards].sort((a, b) => CARD_ORDER[b.value] - CARD_ORDER[a.value]);
+  
+  // 拖拽开始
+  const handleDragStart = (e, card, index) => {
+    if (!isPlayer) return;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', card.id);
+    setDraggedCard({ card, index });
+    e.target.style.opacity = '0.5';
+  };
+  
+  // 拖拽结束
+  const handleDragEnd = (e) => {
+    e.target.style.opacity = '1';
+    setDraggedCard(null);
+    setDragOverIndex(null);
+  };
+  
+  // 拖拽经过
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverIndex(index);
+  };
+  
+  // 拖拽离开
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+  
+  // 放下卡片
+  const handleDrop = (e, targetIndex) => {
+    e.preventDefault();
+    if (!draggedCard || draggedCard.index === targetIndex) {
+      setDragOverIndex(null);
+      return;
+    }
+    
+    // 交换卡片位置
+    const newCards = [...cards];
+    const sourceIndex = cards.findIndex(c => c.id === draggedCard.card.id);
+    const [removed] = newCards.splice(sourceIndex, 1);
+    newCards.splice(targetIndex, 0, removed);
+    
+    // 通知父组件重新排序
+    if (onReorder) {
+      onReorder(newCards);
+    }
+    
+    setDraggedCard(null);
+    setDragOverIndex(null);
+  };
   
   const handleClick = (card) => {
     if (!isPlayer || !canPlay) return;
@@ -48,29 +102,43 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
   
   // 斗地主风格：手牌横向展开，有重叠效果，移动端适配
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'flex-end',
-      padding: isMobile ? '3px 8px 0' : '5px 15px 0',
-      minHeight: isSmallMobile ? '70px' : isMobile ? '77px' : '90px',
-      overflowX: 'auto',
-      gap: '0',
-      WebkitOverflowScrolling: 'touch',
-      flexShrink: 0
-    }}>
+    <div 
+      ref={handRef}
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'flex-end',
+        padding: isMobile ? '3px 8px 0' : '5px 15px 0',
+        minHeight: isSmallMobile ? '70px' : isMobile ? '77px' : '90px',
+        overflowX: 'auto',
+        gap: '0',
+        WebkitOverflowScrolling: 'touch',
+        flexShrink: 0,
+        userSelect: 'none'
+      }}
+    >
       {sortedCards.map((card, index) => {
         const selected = isSelected(card);
+        const isDragging = draggedCard && draggedCard.card.id === card.id;
+        const isDragOver = dragOverIndex === index;
         
         return (
           <div
             key={card.id}
+            draggable={isPlayer}
+            onDragStart={(e) => handleDragStart(e, card, index)}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, index)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, index)}
             style={{
               marginLeft: index === 0 ? 0 : overlap,
-              transition: 'transform 0.2s ease',
-              transform: selected ? 'translateY(-20px)' : 'translateY(0)',
-              zIndex: selected ? 100 : index,
-              flexShrink: 0
+              transition: isDragging ? 'none' : 'transform 0.2s ease',
+              transform: selected ? 'translateY(-20px)' : isDragging ? 'translateY(-30px) scale(1.05)' : 'translateY(0)',
+              zIndex: selected || isDragging ? 100 : index,
+              flexShrink: 0,
+              opacity: isDragging ? 0.5 : 1,
+              cursor: isPlayer ? 'grab' : 'default'
             }}
           >
             <Card
@@ -81,6 +149,18 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
               small={false}
               windowWidth={windowW}
             />
+            {isDragOver && !isDragging && (
+              <div style={{
+                position: 'absolute',
+                left: index === 0 ? '0' : overlap,
+                top: '0',
+                bottom: '0',
+                width: '4px',
+                backgroundColor: '#4CAF50',
+                borderRadius: '2px',
+                zIndex: 101
+              }} />
+            )}
           </div>
         );
       })}

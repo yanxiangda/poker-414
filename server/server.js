@@ -429,14 +429,15 @@ io.on('connection', (socket) => {
     if (!room || room.gameState !== 'playing') return;
     
     const playerIndex = room.getPlayerIndex(socket.id);
-    if (playerIndex !== room.currentPlayer) return; // 只在玩家回合允许排序
+    // 允许任何时候排序，不仅限于自己的回合
+    // if (playerIndex !== room.currentPlayer) return;
     
     // 更新手牌顺序
     room.hands[playerIndex] = data.cards;
     console.log('✅ 手牌顺序已更新:', data.cards.length, '张');
     
-    // 不返回 gameState，避免覆盖本地顺序
-    // socket.emit('gameUpdate', room.toGameState());
+    // 返回 gameState 让客户端更新显示
+    socket.emit('gameUpdate', room.toGameState());
   });
 
   // 过

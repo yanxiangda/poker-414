@@ -414,11 +414,14 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
             <button
               onClick={() => {
                 // 按牌面大小排序
+                const order = {'4':0,'5':1,'6':2,'7':3,'8':4,'9':5,'10':6,'J':7,'Q':8,'K':9,'A':10,'2':11,'3':12,'SJ':13,'BJ':14};
                 const sorted = [...myHand].sort((a, b) => {
-                  const order = {4:0,5:1,6:2,7:3,8:4,9:5,10:6,J:7,Q:8,K:9,A:10,2:11,3:12,SJ:13,BJ:14};
-                  return (order[b.value] || 0) - (order[a.value] || 0);
+                  const orderA = order[a.value] !== undefined ? order[a.value] : 0;
+                  const orderB = order[b.value] !== undefined ? order[b.value] : 0;
+                  return orderB - orderA;
                 });
-                console.log('🎴 理牌：按大小排序');
+                console.log('🎴 理牌：按大小排序', sorted.map(c => c.value));
+                // 立即更新本地顺序（视觉反馈）
                 socket.emit('reorderCards', { cards: sorted });
                 // 清空选中状态
                 setSelectedCards([]);

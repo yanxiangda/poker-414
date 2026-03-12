@@ -70,6 +70,18 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
   const isSmallMobile = windowW < 400;
   const overlapCss = isSmallMobile ? '-15px' : isMobile ? '-25px' : '-35px';
   
+  // 拖拽移动（使用 ref 保存最新状态）
+  const draggedIndexRef = useRef(null);
+  const cardOrderRef = useRef(cardOrder);
+  
+  useEffect(() => {
+    draggedIndexRef.current = draggedIndex;
+  }, [draggedIndex]);
+  
+  useEffect(() => {
+    cardOrderRef.current = cardOrder;
+  }, [cardOrder]);
+  
   // 开始拖拽
   const handleMouseDown = (e, index) => {
     if (!isPlayer) return;
@@ -80,11 +92,12 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
   };
   
   // 拖拽移动
-  const handleMouseMove = (e) => {
-    if (draggedIndex === null || !handRef.current) return;
+  const handleMouseMove = React.useCallback((e) => {
+    const currentIndex = draggedIndexRef.current;
+    if (currentIndex === null || !handRef.current) return;
     e.preventDefault();
     
-    const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+    const clientX = e.type.includes('touch') ? (e.touches[0]?.clientX || 0) : e.clientX;
     const handRect = handRef.current.getBoundingClientRect();
     const scrollLeft = handRef.current.scrollLeft || 0;
     const relativeX = clientX - handRect.left + scrollLeft;
@@ -94,34 +107,33 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     const overlap = isSmallMobile ? 15 : isMobile ? 25 : 35;
     const stepWidth = cardWidth - overlap;
     const newIndex = Math.round(relativeX / stepWidth);
-    const clampedIndex = Math.max(0, Math.min(newIndex, orderedCards.length - 1));
+    const clampedIndex = Math.max(0, Math.min(newIndex, cardOrderRef.current.length - 1));
     
-    if (clampedIndex !== draggedIndex && clampedIndex >= 0) {
+    if (clampedIndex !== currentIndex && clampedIndex >= 0) {
       // 交换卡片顺序
-      const newOrder = [...cardOrder];
-      const temp = newOrder[draggedIndex];
-      newOrder[draggedIndex] = newOrder[clampedIndex];
+      const newOrder = [...cardOrderRef.current];
+      const temp = newOrder[currentIndex];
+      newOrder[currentIndex] = newOrder[clampedIndex];
       newOrder[clampedIndex] = temp;
       
       setCardOrder(newOrder);
+      draggedIndexRef.current = clampedIndex;
       setDraggedIndex(clampedIndex);
-      
-      console.log('🔄 交换位置:', draggedIndex, '->', clampedIndex, '新顺序:', newOrder.length);
     }
-  };
+  }, [isSmallMobile, isMobile]);
   
   // 结束拖拽
-  const handleMouseUp = () => {
-    if (draggedIndex !== null) {
+  const handleMouseUp = React.useCallback(() => {
+    const currentIndex = draggedIndexRef.current;
+    if (currentIndex !== null) {
       console.log('✅ 拖拽结束，发送新顺序到服务器');
       if (onReorder) {
-        // 发送完整的牌顺序给服务器
-        const newCards = cardOrder.map(id => cards.find(c => c.id === id)).filter(Boolean);
+        const newCards = cardOrderRef.current.map(id => cards.find(c => c.id === id)).filter(Boolean);
         onReorder(newCards);
       }
     }
     setDraggedIndex(null);
-  };
+  }, [onReorder, cards]);
   
   // 全局事件监听
   useEffect(() => {
@@ -138,7 +150,7 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
         document.removeEventListener('touchend', handleMouseUp);
       };
     }
-  }, [draggedIndex, cardOrder]);
+  }, [draggedIndex, handleMouseMove, handleMouseUp]);
   
   const handleClick = (card) => {
     if (!isPlayer || !canPlay) return;

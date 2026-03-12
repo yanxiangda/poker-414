@@ -556,6 +556,9 @@ function checkRoundEnd(room) {
   if (victory) {
     room.gameState = 'finished';
     room.messages.push(`🏆 ${victory.winner === 0 ? 'A 队' : 'B 队'}胜利！`);
+    // 游戏结束，广播最终状态
+    room.broadcast('gameUpdate', room.toGameState());
+    return; // 直接返回，不再执行后续逻辑
   }
   
   // 借光规则：出完牌的玩家，同队下一个有手牌的玩家获得先手出牌权

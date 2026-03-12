@@ -102,31 +102,9 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
     }
   };
 
-  const isMyTurn = gameState?.currentPlayer === playerIndex;
-  const myTeam = playerIndex % 2;
-  const myHand = gameState?.hands?.[playerIndex] || [];
-  
-  // 检查选中的牌能否管上
-  const canBeatLastCards = () => {
-    if (!isMyTurn || selectedCards.length === 0) return false;
-    if (!gameState?.lastPlayedCards || gameState.lastPlayedCards.length === 0) return true; // 先手
-    return canPlay(gameState.lastPlayedCards, selectedCards);
-  };
-  
-  const canPlayCards = canBeatLastCards();
-  
-  // 响应式尺寸计算
-  const isMobile = windowSize.width < 768;
-  const isSmallMobile = windowSize.width < 400;
-  const isTablet = windowSize.width >= 768 && windowSize.width < 1024;
-  
-  const otherPlayers = gameState?.players || [];
-  const teammateIndex = otherPlayers.findIndex((p, i) => i % 2 === myTeam && i !== playerIndex);
-  const teammate = teammateIndex >= 0 ? otherPlayers[teammateIndex] : null;
-  const opponents = otherPlayers.filter((p, i) => i % 2 !== myTeam);
-
-  // 游戏结束
+  // 游戏结束检查（优先判断，避免后续代码崩溃）
   if (gameState?.gameState === 'finished') {
+    const myTeam = playerIndex % 2;
     return (
       <div style={{
         minHeight: '100vh',
@@ -169,6 +147,29 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
       </div>
     );
   }
+
+  const isMyTurn = gameState?.currentPlayer === playerIndex;
+  const myTeam = playerIndex % 2;
+  const myHand = gameState?.hands?.[playerIndex] || [];
+  
+  // 检查选中的牌能否管上
+  const canBeatLastCards = () => {
+    if (!isMyTurn || selectedCards.length === 0) return false;
+    if (!gameState?.lastPlayedCards || gameState.lastPlayedCards.length === 0) return true; // 先手
+    return canPlay(gameState.lastPlayedCards, selectedCards);
+  };
+  
+  const canPlayCards = canBeatLastCards();
+  
+  // 响应式尺寸计算
+  const isMobile = windowSize.width < 768;
+  const isSmallMobile = windowSize.width < 400;
+  const isTablet = windowSize.width >= 768 && windowSize.width < 1024;
+  
+  const otherPlayers = gameState?.players || [];
+  const teammateIndex = otherPlayers.findIndex((p, i) => i % 2 === myTeam && i !== playerIndex);
+  const teammate = teammateIndex >= 0 ? otherPlayers[teammateIndex] : null;
+  const opponents = otherPlayers.filter((p, i) => i % 2 !== myTeam);
   
   return (
     <div style={{ 

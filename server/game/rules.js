@@ -248,15 +248,8 @@ export function canPlay(prevHand, newHand) {
       return newHandAnalysis.value > prev.value;
     }
     
-    // 张数多的炸可以管张数少的炸
-    if (prev.type === HAND_TYPE.BOMB && newHandAnalysis.type === HAND_TYPE.BOMB) {
-      if (newHandAnalysis.count > prev.count) return true;
-      if (newHandAnalysis.count === prev.count) {
-        return newHandAnalysis.value > prev.value;
-      }
-    }
-    
-    return false; // 张数不同一般不能管
+    // 张数不同且不是特殊规则，不能管
+    return false;
   }
   
   // 张数相同，按类型比较
@@ -264,6 +257,13 @@ export function canPlay(prevHand, newHand) {
     // 同张数不同类型，比较路数
     if (prev.road !== undefined && newHandAnalysis.road !== undefined) {
       return newHandAnalysis.road > prev.road;
+    }
+    // 张数多的炸可以管张数少的炸
+    if (prev.type === HAND_TYPE.BOMB && newHandAnalysis.type === HAND_TYPE.BOMB) {
+      if (newHandAnalysis.count > prev.count) return true;
+      if (newHandAnalysis.count === prev.count) {
+        return newHandAnalysis.value > prev.value;
+      }
     }
     return false;
   }

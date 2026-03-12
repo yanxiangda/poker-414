@@ -4,6 +4,7 @@ import { calculateTableScore } from './game/scoring.js';
 import Hand from './Hand.jsx';
 import Card from './Card.jsx';
 import { SimpleCardAnimation } from './CardAnimation.jsx';
+import { CARD_ORDER } from './game/deck.js';
 
 /**
  * 玩家头像组件
@@ -104,6 +105,15 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
   const isMyTurn = gameState.currentPlayer === playerIndex;
   const myTeam = playerIndex % 2;
   const myHand = gameState.hands[playerIndex] || [];
+  
+  // 检查选中的牌能否管上
+  const canBeatLastCards = () => {
+    if (!isMyTurn || selectedCards.length === 0) return false;
+    if (!gameState.lastPlayedCards || gameState.lastPlayedCards.length === 0) return true; // 先手
+    return canPlay(gameState.lastPlayedCards, selectedCards);
+  };
+  
+  const canPlayCards = canBeatLastCards();
   
   // 响应式尺寸计算
   const isMobile = windowSize.width < 768;
@@ -467,21 +477,21 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
                       alert('Socket 未连接！');
                     }
                   }}
-                  disabled={selectedCards.length === 0}
+                  disabled={selectedCards.length === 0 || !canPlayCards}
                   style={{ 
                     padding: isMobile ? '10px 24px' : '14px 40px', 
                     fontSize: isMobile ? '16px' : '18px', 
                     fontWeight: 'bold',
-                    cursor: selectedCards.length > 0 ? 'pointer' : 'not-allowed',
-                    backgroundColor: selectedCards.length > 0 ? '#4CAF50' : '#666',
+                    cursor: (selectedCards.length > 0 && canPlayCards) ? 'pointer' : 'not-allowed',
+                    backgroundColor: (selectedCards.length > 0 && canPlayCards) ? '#4CAF50' : '#666',
                     color: 'white',
                     border: 'none',
                     borderRadius: '30px',
-                    boxShadow: selectedCards.length > 0 ? '0 4px 15px rgba(76, 175, 80, 0.4)' : 'none',
-                    minWidth: '100px'
+                    boxShadow: (selectedCards.length > 0 && canPlayCards) ? '0 4px 15px rgba(76, 175, 80, 0.4)' : 'none',
+                    minWidth: '120px'
                   }}
                 >
-                  出牌 ({selectedCards.length}张)
+                  {selectedCards.length === 0 ? '选牌' : (canPlayCards ? `出牌 (${selectedCards.length}张)` : '❌ 管不起')}
                 </button>
                 <button 
                   onClick={() => {

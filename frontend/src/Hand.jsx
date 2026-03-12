@@ -1,19 +1,24 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Card from './Card.jsx';
 import { CARD_ORDER } from './game/deck.js';
 
 /**
- * 手牌组件 - 斗地主风格横向展开，响应式适配，支持拖拽排序
+ * 手牌组件 - 支持拖拽排序
  */
 export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPlayer, windowWidth, onReorder }) {
-  const [localSelected, setLocalSelected] = React.useState([]);
-  const [draggedCard, setDraggedCard] = useState(null);
-  const [dragOffset, setDragOffset] = useState(0);
+  const [localSelected, setLocalSelected] = useState([]);
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [currentCards, setCurrentCards] = useState([...cards]);
   const handRef = useRef(null);
   const windowW = windowWidth || (typeof window !== 'undefined' ? window.innerWidth : 1024);
   
+  // 同步外部 cards 变化
+  useEffect(() => {
+    setCurrentCards([...cards]);
+  }, [cards]);
+  
   // 当外部 selectedCards 清空时，同步清空本地选中状态
-  React.useEffect(() => {
+  useEffect(() => {
     if (!selectedCards || selectedCards.length === 0) {
       setLocalSelected([]);
     }
@@ -23,87 +28,82 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     return <div style={{ padding: '20px', color: '#999', textAlign: 'center' }}>手牌为空</div>;
   }
   
-  // 按大小排序
-  const sortedCards = [...cards].sort((a, b) => CARD_ORDER[b.value] - CARD_ORDER[a.value]);
+  // 按大小排序显示
+  const sortedCards = [...currentCards].sort((a, b) => CARD_ORDER[b.value] - CARD_ORDER[a.value]);
   
-  // 获取牌的显示宽度（考虑重叠）
   const isMobile = windowW < 768;
   const isSmallMobile = windowW < 400;
-  const cardWidth = isSmallMobile ? 42 : isMobile ? 48 : 60;
-  const overlap = isSmallMobile ? 15 : isMobile ? 25 : 35;
-  const displayWidth = cardWidth - overlap;
+  const overlapCss = isSmallMobile ? '-15px' : isMobile ? '-25px' : '-35px';
+  const cardDisplayWidth = isSmallMobile ? 27 : isMobile ? 23 : 25; // 像素
   
-  // 开始拖拽（鼠标/触摸）
-  const handleDragStart = (e, card, index) => {
+  // 开始拖拽
+  const handleMouseDown = (e, index) => {
     if (!isPlayer) return;
     e.preventDefault();
-    
-    const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-    const cardElement = e.currentTarget;
-    const rect = cardElement.getBoundingClientRect();
-    const offsetX = clientX - rect.left;
-    
-    setDraggedCard({ card, index, startX: clientX, offsetX });
-    console.log('🃏 开始拖拽:', card.id, '位置:', index);
+    setDraggedIndex(index);
+    console.log('🃏 开始拖拽索引:', index, '牌:', sortedCards[index].id);
   };
   
   // 拖拽移动
-  const handleDragMove = (e) => {
-    if (!draggedCard || !handRef.current) return;
+  const handleMouseMove = (e) => {
+    if (draggedIndex === null || !handRef.current) return;
     e.preventDefault();
     
     const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
     const handRect = handRef.current.getBoundingClientRect();
-    const relativeX = clientX - handRect.left - draggedCard.offsetX;
+    const scrollLeft = handRef.current.scrollLeft || 0;
+    const relativeX = clientX - handRect.left + scrollLeft;
     
     // 计算目标索引
-    const newIndex = Math.round(relativeX / displayWidth);
+    const cardWidth = isSmallMobile ? 42 : isMobile ? 48 : 60;
+    const newIndex = Math.floor(relativeX / (cardWidth - Math.abs(parseInt(overlapCss))));
     const clampedIndex = Math.max(0, Math.min(newIndex, sortedCards.length - 1));
     
-    if (clampedIndex !== draggedCard.index) {
+    if (clampedIndex !== draggedIndex && clampedIndex >= 0) {
       // 交换卡片
-      const newCards = [...sortedCards];
-      const temp = newCards[draggedCard.index];
-      newCards[draggedCard.index] = newCards[clampedIndex];
-      newCards[clampedIndex] = temp;
+      const newCards = [...currentCards];
+      const sourceCard = sortedCards[draggedIndex];
+      const targetCard = sortedCards[clampedIndex];
       
-      setDraggedCard({ ...draggedCard, index: clampedIndex });
+      const sourceRealIndex = newCards.findIndex(c => c.id === sourceCard.id);
+      const targetRealIndex = newCards.findIndex(c => c.id === targetCard.id);
       
-      // 立即通知重排序（视觉反馈）
-      if (onReorder) {
-        onReorder(newCards);
-      }
-      console.log('🔄 拖拽到新位置:', clampedIndex);
+      [newCards[sourceRealIndex], newCards[targetRealIndex]] = [newCards[targetRealIndex], newCards[sourceRealIndex]];
+      
+      setCurrentCards(newCards);
+      setDraggedIndex(clampedIndex);
+      
+      console.log('🔄 交换位置:', draggedIndex, '->', clampedIndex);
     }
   };
   
   // 结束拖拽
-  const handleDragEnd = () => {
-    if (draggedCard) {
-      console.log('✅ 拖拽结束，最终位置:', draggedCard.index);
+  const handleMouseUp = () => {
+    if (draggedIndex !== null) {
+      console.log('✅ 拖拽结束，发送新顺序到服务器');
+      if (onReorder) {
+        onReorder(currentCards);
+      }
     }
-    setDraggedCard(null);
+    setDraggedIndex(null);
   };
   
   // 全局事件监听
-  React.useEffect(() => {
-    if (draggedCard) {
-      const moveEvent = draggedCard.startX !== undefined ? 
-        (typeof window !== 'undefined' && 'ontouchmove' in window ? 'touchmove' : 'mousemove') : 
-        'mousemove';
-      const endEvent = draggedCard.startX !== undefined ? 
-        (typeof window !== 'undefined' && 'ontouchend' in window ? 'touchend' : 'mouseup') : 
-        'mouseup';
-      
-      window.addEventListener(moveEvent, handleDragMove, { passive: false });
-      window.addEventListener(endEvent, handleDragEnd);
+  useEffect(() => {
+    if (draggedIndex !== null) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleMouseMove, { passive: false });
+      document.addEventListener('touchend', handleMouseUp);
       
       return () => {
-        window.removeEventListener(moveEvent, handleDragMove);
-        window.removeEventListener(endEvent, handleDragEnd);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('touchmove', handleMouseMove);
+        document.removeEventListener('touchend', handleMouseUp);
       };
     }
-  }, [draggedCard]);
+  }, [draggedIndex, currentCards]);
   
   const handleClick = (card) => {
     if (!isPlayer || !canPlay) return;
@@ -123,10 +123,6 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     return selectedCards?.some(c => c.id === card.id) || localSelected.includes(card.id);
   };
   
-  // 响应式重叠：屏幕越小，重叠越少
-  const overlapCss = isSmallMobile ? '-15px' : isMobile ? '-25px' : '-35px';
-  
-  // 斗地主风格：手牌横向展开，有重叠效果，移动端适配
   return (
     <div 
       ref={handRef}
@@ -140,19 +136,18 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
         gap: '0',
         WebkitOverflowScrolling: 'touch',
         flexShrink: 0,
-        userSelect: 'none',
-        touchAction: 'none'
+        userSelect: 'none'
       }}
     >
       {sortedCards.map((card, index) => {
         const selected = isSelected(card);
-        const isDragging = draggedCard && draggedCard.card.id === card.id;
+        const isDragging = draggedIndex === index;
         
         return (
           <div
             key={card.id}
-            onMouseDown={(e) => handleDragStart(e, card, index)}
-            onTouchStart={(e) => handleDragStart(e, card, index)}
+            onMouseDown={(e) => handleMouseDown(e, index)}
+            onTouchStart={(e) => handleMouseDown(e, index)}
             style={{
               marginLeft: index === 0 ? 0 : overlapCss,
               transition: isDragging ? 'none' : 'transform 0.2s ease',
@@ -160,8 +155,7 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
               zIndex: selected || isDragging ? 100 : index,
               flexShrink: 0,
               opacity: isDragging ? 0.7 : 1,
-              cursor: isPlayer ? 'grab' : 'default',
-              touchAction: 'none'
+              cursor: isPlayer ? 'grab' : 'default'
             }}
           >
             <Card

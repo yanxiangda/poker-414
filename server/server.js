@@ -422,31 +422,21 @@ io.on('connection', (socket) => {
 
   // 重排序手牌
   socket.on('reorderCards', (data) => {
-    console.log('🔄 收到重排序请求:', socket.id, data.cards.length, '张牌');
     const playerInfo = players.get(socket.id);
-    if (!playerInfo) {
-      console.log('❌ 玩家信息不存在');
-      return;
-    }
+    if (!playerInfo) return;
     
     const room = rooms.get(playerInfo.roomId);
-    if (!room || room.gameState !== 'playing') {
-      console.log('❌ 房间不存在或游戏未进行中');
-      return;
-    }
+    if (!room || room.gameState !== 'playing') return;
     
     const playerIndex = room.getPlayerIndex(socket.id);
-    if (playerIndex !== room.currentPlayer) {
-      console.log('❌ 不是你的回合');
-      return;
-    }
+    if (playerIndex !== room.currentPlayer) return; // 只在玩家回合允许排序
     
     // 更新手牌顺序
     room.hands[playerIndex] = data.cards;
-    console.log('✅ 手牌顺序已更新');
+    console.log('✅ 手牌顺序已更新:', data.cards.length, '张');
     
-    // 只通知发送者（其他玩家不需要知道手牌顺序）
-    socket.emit('gameUpdate', room.toGameState());
+    // 不返回 gameState，避免覆盖本地顺序
+    // socket.emit('gameUpdate', room.toGameState());
   });
 
   // 过

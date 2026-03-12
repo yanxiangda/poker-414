@@ -204,33 +204,59 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
       {orderedCards.map((card, index) => {
         const selected = isSelected(card);
         const isDragging = draggedIndex === index;
+        const isDisabled = !canPlay && isPlayer;
         
         return (
           <div
             key={card.id}
-            onMouseDown={(e) => handleMouseDown(e, index)}
-            onTouchStart={(e) => handleMouseDown(e, index)}
+            onMouseDown={(e) => {
+              if (!isDisabled) handleMouseDown(e, index);
+            }}
+            onTouchStart={(e) => {
+              if (!isDisabled) handleMouseDown(e, index);
+            }}
+            onClick={(e) => {
+              if (!isDisabled) {
+                handleClick(card);
+              }
+            }}
             style={{
               marginLeft: index === 0 ? 0 : overlapCss,
               transition: isDragging ? 'none' : 'transform 0.2s ease',
               transform: selected ? 'translateY(-20px)' : isDragging ? 'translateY(-30px) scale(1.05)' : 'translateY(0)',
               zIndex: selected || isDragging ? 100 : index,
               flexShrink: 0,
-              opacity: isDragging ? 0.7 : 1,
-              cursor: isPlayer ? 'grab' : 'default'
+              opacity: isDragging ? 0.7 : isDisabled ? 0.5 : 1,
+              cursor: isDisabled ? 'not-allowed' : (isPlayer ? 'grab' : 'default'),
+              filter: isDisabled ? 'grayscale(30%)' : 'none'
             }}
           >
             <Card
               card={card}
               selected={selected}
-              onClick={() => handleClick(card)}
-              disabled={!canPlay && isPlayer}
+              onClick={() => {}}
+              disabled={isDisabled}
               small={false}
               windowWidth={windowW}
             />
           </div>
         );
       })}
+      
+      {/* 其他人出牌时的禁用遮罩层 */}
+      {!canPlay && isPlayer && orderedCards.length > 0 && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: '20px',
+          backgroundColor: 'rgba(0, 0, 0, 0.08)',
+          borderRadius: '12px',
+          pointerEvents: 'none',
+          zIndex: 50
+        }} />
+      )}
     </div>
   );
 }

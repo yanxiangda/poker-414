@@ -403,6 +403,42 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
             />
           </div>
           
+          {/* 理牌按钮 */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            padding: isMobile ? '6px 8px' : '10px 15px',
+            backgroundColor: 'rgba(0,0,0,0.3)',
+            flexShrink: 0
+          }}>
+            <button
+              onClick={() => {
+                // 按牌面大小排序
+                const sorted = [...myHand].sort((a, b) => {
+                  const order = {4:0,5:1,6:2,7:3,8:4,9:5,10:6,J:7,Q:8,K:9,A:10,2:11,3:12,SJ:13,BJ:14};
+                  return (order[b.value] || 0) - (order[a.value] || 0);
+                });
+                console.log('🎴 理牌：按大小排序');
+                socket.emit('reorderCards', { cards: sorted });
+                // 清空选中状态
+                setSelectedCards([]);
+              }}
+              style={{
+                padding: isMobile ? '8px 20px' : '10px 30px',
+                fontSize: isMobile ? '14px' : '16px',
+                fontWeight: 'bold',
+                backgroundColor: '#2196F3',
+                color: 'white',
+                border: 'none',
+                borderRadius: '20px',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(33, 150, 243, 0.4)'
+              }}
+            >
+              🎴 理牌
+            </button>
+          </div>
+          
           {/* 出牌按钮 - 放在手牌区域外面，确保可见 */}
           {isMyTurn && (
             <div style={{

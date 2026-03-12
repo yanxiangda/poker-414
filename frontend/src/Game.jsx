@@ -461,16 +461,16 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
                   setSelectedCards([]);
                 }}
                 style={{
-                  padding: isMobile ? '8px 16px' : '10px 24px',
-                  fontSize: isMobile ? '13px' : '15px',
+                  padding: isMobile ? '10px 24px' : '14px 40px',
+                  fontSize: isMobile ? '16px' : '18px',
                   fontWeight: 'bold',
                   backgroundColor: '#2196F3',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '20px',
+                  borderRadius: '30px',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(33, 150, 243, 0.4)',
-                  minWidth: '80px'
+                  boxShadow: '0 4px 15px rgba(33, 150, 243, 0.4)',
+                  minWidth: '100px'
                 }}
               >
                 🎴 理牌

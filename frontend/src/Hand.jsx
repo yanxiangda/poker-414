@@ -68,7 +68,7 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
   
   const isMobile = windowW < 768;
   const isSmallMobile = windowW < 400;
-  const overlapCss = isSmallMobile ? '-15px' : isMobile ? '-25px' : '-35px';
+  const overlapCss = isSmallMobile ? '-8px' : isMobile ? '-12px' : '-18px';
   
   // 拖拽移动（使用 ref 保存最新状态）
   const draggedIndexRef = useRef(null);

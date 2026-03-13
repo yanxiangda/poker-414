@@ -143,12 +143,12 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
         const currentlySelected = isSelected(card);
         const shouldSelect = slideDirection === 'select';
         
-        // 根据滑动方向选中或取消选中
+        // 根据滑动方向选中或取消选中 - 使用函数式更新避免闭包问题
         if (shouldSelect && !currentlySelected) {
-          setLocalSelected([...localSelected, card.id]);
+          setLocalSelected(prev => [...prev, card.id]);
           if (onCardClick) onCardClick(card);
         } else if (!shouldSelect && currentlySelected) {
-          setLocalSelected(localSelected.filter(id => id !== card.id));
+          setLocalSelected(prev => prev.filter(id => id !== card.id));
           if (onCardClick) onCardClick(card);
         }
       }

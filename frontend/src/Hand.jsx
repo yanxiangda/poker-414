@@ -137,11 +137,13 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     const clientX = e.type.includes('touch') ? (e.touches[0]?.clientX || 0) : e.clientX;
     const clientY = e.type.includes('touch') ? (e.touches[0]?.clientY || 0) : e.clientY;
     
-    // 检测经过的牌
+    // 检测经过的牌 - 使用更大的检测区域
     const elements = document.elementsFromPoint(clientX, clientY);
-    const cardElement = elements.find(el => el.closest('[data-card-index]'));
     
-    if (cardElement) {
+    // 查找所有可能的卡牌元素（包括被遮挡的）
+    const cardElements = elements.filter(el => el.closest('[data-card-index]'));
+    
+    for (const cardElement of cardElements) {
       const index = parseInt(cardElement.getAttribute('data-card-index'));
       const card = orderedCards[index];
       
@@ -152,7 +154,37 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
         const currentlySelected = isSelected(card);
         const shouldSelect = slideDirection === 'select';
         
-        // 根据滑动方向选中或取消选中 - 使用函数式更新避免闭包问题
+        // 根据滑动方向选中或取消选中
+        if (shouldSelect && !currentlySelected) {
+          setLocalSelected(prev => [...prev, card.id]);
+          if (onCardClick) onCardClick(card);
+        } else if (!shouldSelect && currentlySelected) {
+          setLocalSelected(prev => prev.filter(id => id !== card.id));
+          if (onCardClick) onCardClick(card);
+        }
+      }
+    }
+    
+    // 额外检测：根据 X 坐标检测经过的牌（解决重叠问题）
+    const handRect = handRef.current.getBoundingClientRect();
+    const relativeX = clientX - handRect.left;
+    const isMobile = windowW < 768;
+    const isSmallMobile = windowW < 400;
+    const cardWidth = isSmallMobile ? 42 : isMobile ? 48 : 60;
+    const overlap = isSmallMobile ? 8 : isMobile ? 12 : 18;
+    const stepWidth = cardWidth - overlap;
+    
+    // 计算当前 X 坐标对应的牌索引
+    const approximateIndex = Math.floor(relativeX / stepWidth);
+    
+    if (approximateIndex >= 0 && approximateIndex < orderedCards.length) {
+      const card = orderedCards[approximateIndex];
+      if (card && !slidCardsRef.current.has(card.id)) {
+        slidCardsRef.current.add(card.id);
+        
+        const currentlySelected = isSelected(card);
+        const shouldSelect = slideDirection === 'select';
+        
         if (shouldSelect && !currentlySelected) {
           setLocalSelected(prev => [...prev, card.id]);
           if (onCardClick) onCardClick(card);

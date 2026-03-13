@@ -249,10 +249,14 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
   const handleClick = (card) => {
     if (!isPlayer || !canPlay) return;
     
-    if (localSelected.includes(card.id)) {
-      setLocalSelected(localSelected.filter(id => id !== card.id));
+    // 使用 isSelected 判断当前是否选中（包括 selectedCards 和 localSelected）
+    const currentlySelected = isSelected(card);
+    
+    // 切换选中状态
+    if (currentlySelected) {
+      setLocalSelected(prev => prev.filter(id => id !== card.id));
     } else {
-      setLocalSelected([...localSelected, card.id]);
+      setLocalSelected(prev => [...prev, card.id]);
     }
     
     if (onCardClick) {

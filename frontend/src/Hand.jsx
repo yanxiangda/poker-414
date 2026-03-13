@@ -85,7 +85,6 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
   // 开始拖拽或滑动选牌
   const handleMouseDown = (e, index) => {
     if (!isPlayer) return;
-    e.preventDefault();
     
     const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
     const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
@@ -97,13 +96,14 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     slideStartYRef.current = clientY;
     
     // 检测点击位置：上半部分（卡牌高度 50% 以上）触发滑动选牌
-    const cardTop = e.target.getBoundingClientRect().top;
-    const cardHeight = e.target.getBoundingClientRect().height;
-    const clickY = clientY - cardTop;
-    const isInTopHalf = clickY < cardHeight / 2;
+    const cardRect = e.currentTarget.getBoundingClientRect();
+    const clickY = clientY - cardRect.top;
+    const isInTopHalf = clickY < cardRect.height / 2;
     
     if (isInTopHalf && canPlay) {
-      // 滑动选牌模式
+      // 滑动选牌模式 - 阻止事件冒泡
+      e.stopPropagation();
+      
       setIsSliding(true);
       slidCardsRef.current.clear(); // 清空已处理记录
       
@@ -117,12 +117,13 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
       if (currentlySelected) {
         setLocalSelected(prev => prev.filter(id => id !== card.id));
         slidCardsRef.current.add(card.id);
-        if (onCardClick) onCardClick(card);
       } else {
         setLocalSelected(prev => [...prev, card.id]);
         slidCardsRef.current.add(card.id);
-        if (onCardClick) onCardClick(card);
       }
+      
+      // 通知父组件
+      if (onCardClick) onCardClick(card);
     } else {
       // 普通拖拽模式
       setDraggedIndex(index);
@@ -306,15 +307,16 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
               zIndex: selected || isDragging ? 100 : index,
               flexShrink: 0,
               opacity: isDragging ? 0.7 : 1,
-              cursor: isPlayer ? 'grab' : 'default',
-              position: 'relative'
+              cursor: isPlayer ? (isSliding ? 'crosshair' : 'grab') : 'default',
+              position: 'relative',
+              pointerEvents: 'auto'
             }}
           >
             <Card
               card={card}
               selected={selected}
               onClick={() => {}}
-              disabled={!canPlay && isPlayer}
+              disabled={!canPlay && isPlayer && !isSliding}
               small={false}
               windowWidth={windowW}
             />

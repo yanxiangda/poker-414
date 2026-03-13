@@ -145,7 +145,7 @@ export default function App() {
     });
 
     newSocket.on('gameUpdate', (state) => {
-      console.log('🔄 游戏更新');
+      console.log('🔄 游戏更新:', state?.gameState);
       setGameState(state);
       localStorage.setItem('poker414_lastRoom', JSON.stringify({
         roomId,

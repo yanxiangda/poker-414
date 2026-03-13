@@ -103,9 +103,11 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
   };
 
   // 游戏结束检查（优先判断，避免后续代码崩溃）
+  console.log('🎮 Game 渲染，gameState:', gameState?.gameState);
   if (!gameState || gameState.gameState === 'finished') {
     const myTeam = playerIndex % 2;
     const teamScores = gameState?.teamScores || [0, 0];
+    console.log('🏆 游戏结束界面，teamScores:', teamScores);
     
     return (
       <div style={{

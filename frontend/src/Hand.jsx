@@ -9,6 +9,7 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [isSliding, setIsSliding] = useState(false); // 是否正在滑动选牌
   const [slideDirection, setSlideDirection] = useState(null); // 'select' or 'deselect'
+  const slidCardsRef = useRef(new Set()); // 记录已经处理过的牌，避免重复触发
   // 使用用户自定义的顺序，如果没有则用原始顺序
   const [cardOrder, setCardOrder] = useState(cards.map(c => c.id));
   const handRef = useRef(null);
@@ -104,6 +105,8 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     if (isInTopHalf && canPlay) {
       // 滑动选牌模式
       setIsSliding(true);
+      slidCardsRef.current.clear(); // 清空已处理记录
+      
       const card = orderedCards[index];
       const currentlySelected = isSelected(card);
       
@@ -112,10 +115,12 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
       
       // 立即切换当前牌的状态
       if (currentlySelected) {
-        setLocalSelected(localSelected.filter(id => id !== card.id));
+        setLocalSelected(prev => prev.filter(id => id !== card.id));
+        slidCardsRef.current.add(card.id);
         if (onCardClick) onCardClick(card);
       } else {
-        setLocalSelected([...localSelected, card.id]);
+        setLocalSelected(prev => [...prev, card.id]);
+        slidCardsRef.current.add(card.id);
         if (onCardClick) onCardClick(card);
       }
     } else {
@@ -139,7 +144,10 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
       const index = parseInt(cardElement.getAttribute('data-card-index'));
       const card = orderedCards[index];
       
-      if (card) {
+      if (card && !slidCardsRef.current.has(card.id)) {
+        // 记录已处理的牌，避免重复触发
+        slidCardsRef.current.add(card.id);
+        
         const currentlySelected = isSelected(card);
         const shouldSelect = slideDirection === 'select';
         
@@ -215,13 +223,14 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
       console.log('✅ 滑动选牌结束');
       setIsSliding(false);
       setSlideDirection(null);
+      slidCardsRef.current.clear();
     }
     setDraggedIndex(null);
   };
   
   // 全局事件监听
   useEffect(() => {
-    if (draggedIndex !== null) {
+    if (draggedIndex !== null || isSliding) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       document.addEventListener('touchmove', handleMouseMove, { passive: false });
@@ -234,7 +243,7 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
         document.removeEventListener('touchend', handleMouseUp);
       };
     }
-  }, [draggedIndex]);
+  }, [draggedIndex, isSliding]);
   
   const handleClick = (card) => {
     if (!isPlayer || !canPlay) return;
@@ -296,7 +305,7 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
               transform: selected ? 'translateY(-20px)' : isDragging ? 'translateY(-30px) scale(1.05)' : 'translateY(0)',
               zIndex: selected || isDragging ? 100 : index,
               flexShrink: 0,
-              opacity: isDragging || isSliding ? 0.7 : 1,
+              opacity: isDragging ? 0.7 : 1,
               cursor: isPlayer ? 'grab' : 'default',
               position: 'relative'
             }}

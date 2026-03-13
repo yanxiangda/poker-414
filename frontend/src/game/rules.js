@@ -180,6 +180,7 @@ export function canPlay(prevHand, newHand) {
   if (!prev || !newHandAnalysis) return false;
   if (newHandAnalysis.type === 'invalid') return false;
   
+  
   // 张数不同，检查特殊规则
   if (prev.count !== newHandAnalysis.count) {
     // ===== 幺牌可以管单张、一对、顺子、双龙 =====
@@ -199,13 +200,6 @@ export function canPlay(prevHand, newHand) {
       if (prev.type === HAND_TYPE.DOUBLE_STRAIGHT && newHandAnalysis.road >= 4) return true;
     }
     
-    // ===== 双龙可以管顺子（长度相同，比大小）=====
-    if (prev.type === HAND_TYPE.STRAIGHT && 
-        newHandAnalysis.type === HAND_TYPE.DOUBLE_STRAIGHT &&
-        prev.count === newHandAnalysis.count / 2) {
-      return newHandAnalysis.value > prev.value;
-    }
-    
     // ===== 炸的规则 =====
     // 炸可以管单张、一对
     if (newHandAnalysis.type === HAND_TYPE.BOMB) {
@@ -217,6 +211,13 @@ export function canPlay(prevHand, newHand) {
       if (prev.type === HAND_TYPE.DOUBLE_STRAIGHT && newHandAnalysis.count >= 4) return true;
       // **炸可以管张数少的炸**（张数多直接赢）
       if (prev.type === HAND_TYPE.BOMB && newHandAnalysis.count > prev.count) return true;
+    }
+    
+    // ===== 双龙可以管顺子（长度相同，比大小）=====
+    if (prev.type === HAND_TYPE.STRAIGHT && 
+        newHandAnalysis.type === HAND_TYPE.DOUBLE_STRAIGHT &&
+        prev.count === newHandAnalysis.count / 2) {
+      return newHandAnalysis.value > prev.value;
     }
     
     // 幺牌可以管炸（幺牌路数 >= 炸的路数）
@@ -246,21 +247,33 @@ export function canPlay(prevHand, newHand) {
   
   // 张数相同，按类型比较
   if (prev.type !== newHandAnalysis.type) {
+    // 特殊规则：3 张炸可以管顺子（张数相同都是 3）- 优先于路数比较
+    if (prev.type === HAND_TYPE.STRAIGHT && newHandAnalysis.type === HAND_TYPE.BOMB && newHandAnalysis.count >= 3) {
+      return true;
+    }
+    
+    // 特殊规则：王组合可以管一对（张数相同都是 2）- 优先于路数比较
+    if (prev.type === HAND_TYPE.PAIR && newHandAnalysis.type === HAND_TYPE.KING_COMBO && newHandAnalysis.count >= 2) {
+      return true;
+    }
+    
     // 同张数不同类型，比较路数
     if (prev.road !== undefined && newHandAnalysis.road !== undefined) {
       return newHandAnalysis.road > prev.road;
     }
-    // 张数多的炸可以管张数少的炸
-    if (prev.type === HAND_TYPE.BOMB && newHandAnalysis.type === HAND_TYPE.BOMB) {
-      if (newHandAnalysis.count > prev.count) return true;
-      if (newHandAnalysis.count === prev.count) {
-        return newHandAnalysis.value > prev.value;
-      }
-    }
+    
     return false;
   }
   
   // 同类型同张数，比大小
+  // 特殊处理：炸 vs 炸
+  if (prev.type === HAND_TYPE.BOMB && newHandAnalysis.type === HAND_TYPE.BOMB) {
+    if (newHandAnalysis.count > prev.count) return true;
+    if (newHandAnalysis.count === prev.count) {
+      return newHandAnalysis.value > prev.value;
+    }
+  }
+  
   return newHandAnalysis.value > prev.value;
 }
 

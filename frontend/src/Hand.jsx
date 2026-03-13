@@ -137,30 +137,34 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     const clientX = e.type.includes('touch') ? (e.touches[0]?.clientX || 0) : e.clientX;
     const clientY = e.type.includes('touch') ? (e.touches[0]?.clientY || 0) : e.clientY;
     
-    // 检测经过的牌 - 只使用 DOM 元素检测（避免全屏坐标问题）
-    const elements = document.elementsFromPoint(clientX, clientY);
+    // 精确检测：遍历所有卡牌，检查鼠标是否在卡牌实际渲染区域内
+    const cardContainers = handRef.current.querySelectorAll('[data-card-index]');
     
-    // 只取第一个（最顶层的）卡牌元素，避免全屏时误选
-    const cardElement = elements.find(el => el.closest('[data-card-index]'));
-    
-    if (cardElement) {
-      const index = parseInt(cardElement.getAttribute('data-card-index'));
-      const card = orderedCards[index];
+    for (const container of cardContainers) {
+      const rect = container.getBoundingClientRect();
       
-      if (card && !slidCardsRef.current.has(card.id)) {
-        // 记录已处理的牌，避免重复触发
-        slidCardsRef.current.add(card.id);
+      // 检查鼠标是否在这张牌的范围内
+      if (clientX >= rect.left && clientX <= rect.right &&
+          clientY >= rect.top && clientY <= rect.bottom) {
         
-        const currentlySelected = isSelected(card);
-        const shouldSelect = slideDirection === 'select';
+        const index = parseInt(container.getAttribute('data-card-index'));
+        const card = orderedCards[index];
         
-        // 根据滑动方向选中或取消选中
-        if (shouldSelect && !currentlySelected) {
-          setLocalSelected(prev => [...prev, card.id]);
-          if (onCardClick) onCardClick(card);
-        } else if (!shouldSelect && currentlySelected) {
-          setLocalSelected(prev => prev.filter(id => id !== card.id));
-          if (onCardClick) onCardClick(card);
+        if (card && !slidCardsRef.current.has(card.id)) {
+          // 记录已处理的牌，避免重复触发
+          slidCardsRef.current.add(card.id);
+          
+          const currentlySelected = isSelected(card);
+          const shouldSelect = slideDirection === 'select';
+          
+          // 根据滑动方向选中或取消选中
+          if (shouldSelect && !currentlySelected) {
+            setLocalSelected(prev => [...prev, card.id]);
+            if (onCardClick) onCardClick(card);
+          } else if (!shouldSelect && currentlySelected) {
+            setLocalSelected(prev => prev.filter(id => id !== card.id));
+            if (onCardClick) onCardClick(card);
+          }
         }
       }
     }

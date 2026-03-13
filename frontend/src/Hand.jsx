@@ -155,6 +155,7 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
   const handleMouseMove = (e) => {
     // 如果是滑动选牌模式
     if (isSliding) {
+      e.preventDefault(); // 阻止页面滚动
       handleSlideMove(e);
       return;
     }
@@ -220,20 +221,23 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
   
   // 全局事件监听
   useEffect(() => {
+    const onMouseMove = (e) => handleMouseMove(e);
+    const onMouseUp = () => handleMouseUp();
+    
     if (draggedIndex !== null || isSliding) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.addEventListener('touchmove', handleMouseMove, { passive: false });
-      document.addEventListener('touchend', handleMouseUp);
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+      document.addEventListener('touchmove', onMouseMove, { passive: false });
+      document.addEventListener('touchend', onMouseUp);
       
       return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-        document.removeEventListener('touchmove', handleMouseMove);
-        document.removeEventListener('touchend', handleMouseUp);
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        document.removeEventListener('touchmove', onMouseMove);
+        document.removeEventListener('touchend', onMouseUp);
       };
     }
-  }, [draggedIndex, isSliding]);
+  }, [draggedIndex, isSliding, handleMouseMove, handleMouseUp]);
   
   const handleClick = (card) => {
     if (!isPlayer || !canPlay) return;

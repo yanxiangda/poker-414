@@ -215,6 +215,8 @@ export function canPlay(prevHand, newHand) {
       if (prev.type === HAND_TYPE.STRAIGHT && newHandAnalysis.count >= 3) return true;
       // 4 张炸可以管双龙
       if (prev.type === HAND_TYPE.DOUBLE_STRAIGHT && newHandAnalysis.count >= 4) return true;
+      // **炸可以管张数少的炸**（张数多直接赢）
+      if (prev.type === HAND_TYPE.BOMB && newHandAnalysis.count > prev.count) return true;
     }
     
     // 幺牌可以管炸（幺牌路数 >= 炸的路数）

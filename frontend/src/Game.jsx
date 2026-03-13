@@ -126,6 +126,10 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
     );
   }
   
+  const myHand = gameState?.hands?.[playerIndex] || [];
+  const isMyTurn = gameState?.currentPlayer === playerIndex;
+  const myTeam = playerIndex % 2;
+  
   // 检查自己是否出完牌（观战模式）
   const isFinished = myHand.length === 0;
   
@@ -192,10 +196,6 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
     );
   }
 
-  const isMyTurn = gameState?.currentPlayer === playerIndex;
-  const myTeam = playerIndex % 2;
-  const myHand = gameState?.hands?.[playerIndex] || [];
-  
   // 检查选中的牌能否管上
   const canBeatLastCards = () => {
     if (!isMyTurn || selectedCards.length === 0) return false;

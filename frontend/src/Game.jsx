@@ -306,7 +306,7 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
         {/* 中央 - 出牌区 */}
         <div style={{
           position: 'absolute',
-          top: '50%',
+          top: isMobile ? '40%' : '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
           width: '100%',
@@ -316,14 +316,15 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
           alignItems: 'center',
           justifyContent: 'center',
           gap: '15px',
-          padding: '20px'
+          padding: '20px',
+          zIndex: 5
         }}>
           <div style={{
             backgroundColor: '#fff',
             borderRadius: '16px',
             padding: isMobile ? '10px 15px' : '15px 30px',
             boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-            width: isMobile ? '50%' : '60%',
+            width: isMobile ? '80%' : '60%',
             maxWidth: '400px',
             minHeight: isMobile ? '80px' : '100px',
             display: 'flex',

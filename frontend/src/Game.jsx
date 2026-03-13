@@ -103,8 +103,10 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
   };
 
   // 游戏结束检查（优先判断，避免后续代码崩溃）
-  if (gameState?.gameState === 'finished') {
+  if (!gameState || gameState.gameState === 'finished') {
     const myTeam = playerIndex % 2;
+    const teamScores = gameState?.teamScores || [0, 0];
+    
     return (
       <div style={{
         minHeight: '100vh',
@@ -122,12 +124,12 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
         }}>
           <h1 style={{ fontSize: '32px', marginBottom: '20px', color: '#1a4d8f' }}>🏆 游戏结束</h1>
           <p style={{ fontSize: '20px', marginBottom: '10px' }}>
-            {gameState.teamScores[myTeam] > gameState.teamScores[1 - myTeam] ? '🎉 你赢了！' : '😢 你输了'}
+            {!gameState ? '游戏已结束' : (teamScores[myTeam] > teamScores[1 - myTeam] ? '🎉 你赢了！' : '😢 你输了')}
           </p>
           <p style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '30px' }}>
-            <span style={{ color: '#4CAF50' }}>A 队 {gameState.teamScores[0]}</span>
+            <span style={{ color: '#4CAF50' }}>A 队 {teamScores[0]}</span>
             {' vs '}
-            <span style={{ color: '#f44336' }}>B 队 {gameState.teamScores[1]}</span>
+            <span style={{ color: '#f44336' }}>B 队 {teamScores[1]}</span>
           </p>
           <button
             onClick={handleLeaveGame}

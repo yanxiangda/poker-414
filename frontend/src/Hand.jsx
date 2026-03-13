@@ -101,9 +101,9 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     const isInTopHalf = clickY < cardRect.height / 2;
     
     if (isInTopHalf && canPlay) {
-      // 滑动选牌模式 - 阻止事件冒泡
-      e.stopPropagation();
+      // 滑动选牌模式 - 阻止默认和冒泡
       e.preventDefault();
+      e.stopPropagation();
       
       setIsSliding(true);
       slidCardsRef.current.clear(); // 清空已处理记录
@@ -114,16 +114,7 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
       // 决定是选中还是取消选中
       setSlideDirection(currentlySelected ? 'deselect' : 'select');
       
-      // 立即切换当前牌的状态（支持单击选中）
-      if (currentlySelected) {
-        setLocalSelected(prev => prev.filter(id => id !== card.id));
-      } else {
-        setLocalSelected(prev => [...prev, card.id]);
-      }
-      slidCardsRef.current.add(card.id);
-      
-      // 通知父组件
-      if (onCardClick) onCardClick(card);
+      // 不立即切换状态，等 onClick 或滑动处理
     } else {
       // 普通拖拽模式
       setDraggedIndex(index);
@@ -228,6 +219,8 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     }
     if (isSliding) {
       console.log('✅ 滑动选牌结束');
+      // 如果滑动过程中没有选中任何牌（单击），在 onClick 中处理
+      // 如果滑动选中了牌，已经在 handleSlideMove 中处理了
       setIsSliding(false);
       setSlideDirection(null);
       slidCardsRef.current.clear();
@@ -301,8 +294,13 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
             onMouseDown={(e) => handleMouseDown(e, index)}
             onTouchStart={(e) => handleMouseDown(e, index)}
             onClick={(e) => {
-              // 只在可以出牌时允许点击选牌，且没有滑动过（避免与滑动选牌冲突）
-              if (canPlay && isPlayer && slidCardsRef.current.size === 0) {
+              // 只在可以出牌时允许点击选牌
+              if (canPlay && isPlayer) {
+                // 如果是滑动模式且已经滑动过，不处理（由滑动处理）
+                if (isSliding && slidCardsRef.current.size > 0) {
+                  return;
+                }
+                // 单击上半边：切换选中状态
                 handleClick(card);
               }
             }}

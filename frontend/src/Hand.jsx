@@ -270,8 +270,8 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'flex-end',
-        padding: isMobile ? '3px 8px 0' : '5px 15px 0',
-        minHeight: isSmallMobile ? '70px' : isMobile ? '77px' : '90px',
+        padding: isMobile ? '25px 8px 0' : '30px 15px 0', // 增加顶部 padding 给选中浮起留空间
+        minHeight: isSmallMobile ? '95px' : isMobile ? '105px' : '120px', // 增加 minHeight
         overflowX: 'auto',
         overflowY: 'visible',
         gap: '0',

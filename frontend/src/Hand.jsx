@@ -113,14 +113,13 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
       // 决定是选中还是取消选中
       setSlideDirection(currentlySelected ? 'deselect' : 'select');
       
-      // 立即切换当前牌的状态
+      // 立即切换当前牌的状态（支持单击选中）
       if (currentlySelected) {
         setLocalSelected(prev => prev.filter(id => id !== card.id));
-        slidCardsRef.current.add(card.id);
       } else {
         setLocalSelected(prev => [...prev, card.id]);
-        slidCardsRef.current.add(card.id);
       }
+      slidCardsRef.current.add(card.id);
       
       // 通知父组件
       if (onCardClick) onCardClick(card);

@@ -102,8 +102,35 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
     }
   };
 
-  // 游戏结束检查（优先判断，避免后续代码崩溃）
-  if (gameState && gameState.gameState === 'finished') {
+  // gameState 为 null 时的保护
+  if (!gameState) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(180deg, #1a4d8f 0%, #0d2847 50%, #1a4d8f 100%)'
+      }}>
+        <div style={{
+          backgroundColor: 'rgba(255,255,255,0.95)',
+          padding: '40px',
+          borderRadius: '20px',
+          textAlign: 'center',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+        }}>
+          <h1 style={{ fontSize: '32px', marginBottom: '20px', color: '#1a4d8f' }}>⏳ 加载中...</h1>
+          <p style={{ fontSize: '16px', color: '#666' }}>正在等待游戏数据</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // 检查自己是否出完牌（观战模式）
+  const isFinished = myHand.length === 0;
+  
+  // 游戏结束检查
+  if (gameState.gameState === 'finished') {
     const myTeam = playerIndex % 2;
     const teamScores = gameState.teamScores || [0, 0];
     
@@ -136,6 +163,21 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
             style={{
               padding: '14px 40px',
               fontSize: '18px',
+              backgroundColor: '#4CAF50',
+              color: 'white',
+              border: 'none',
+              borderRadius: '30px',
+              cursor: 'pointer',
+              marginRight: '10px'
+            }}
+          >
+            再来一局
+          </button>
+          <button
+            onClick={handleLeaveGame}
+            style={{
+              padding: '14px 40px',
+              fontSize: '18px',
               backgroundColor: '#2196F3',
               color: 'white',
               border: 'none',
@@ -145,30 +187,6 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
           >
             返回主页
           </button>
-        </div>
-      </div>
-    );
-  }
-  
-  // gameState 为 null 时的保护
-  if (!gameState) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(180deg, #1a4d8f 0%, #0d2847 50%, #1a4d8f 100%)'
-      }}>
-        <div style={{
-          backgroundColor: 'rgba(255,255,255,0.95)',
-          padding: '40px',
-          borderRadius: '20px',
-          textAlign: 'center',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
-        }}>
-          <h1 style={{ fontSize: '32px', marginBottom: '20px', color: '#1a4d8f' }}>⏳ 加载中...</h1>
-          <p style={{ fontSize: '16px', color: '#666' }}>正在等待游戏数据</p>
         </div>
       </div>
     );
@@ -409,7 +427,7 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
 
         {/* 下方 - 自己的手牌区域 */}
         <div style={{
-          paddingBottom: isMobile ? '10px' : '20px' // 确保底部有空间
+          paddingBottom: isMobile ? '10px' : '20px'
         }}>
           <div style={{
             backgroundColor: 'rgba(0,0,0,0.3)',
@@ -417,7 +435,23 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
             padding: isMobile ? '5px 8px' : '10px 15px',
             paddingBottom: '0'
           }}>
-            {isMyTurn && gameState.lastPlayedCards && gameState.lastPlayedCards.length > 0 && (
+            {/* 观战模式提示 */}
+            {isFinished && (
+              <div style={{ 
+                textAlign: 'center',
+                padding: '10px',
+                color: '#ffd700',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                backgroundColor: 'rgba(255, 215, 0, 0.2)',
+                borderRadius: '8px',
+                marginBottom: '10px'
+              }}>
+                👀 观战模式 - 等待其他玩家
+              </div>
+            )}
+            
+            {!isFinished && isMyTurn && gameState.lastPlayedCards && gameState.lastPlayedCards.length > 0 && (
               <div style={{ 
                 textAlign: 'center',
                 marginBottom: '10px',
@@ -429,7 +463,7 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
               </div>
             )}
             
-            {isMyTurn && (!gameState.lastPlayedCards || gameState.lastPlayedCards.length === 0) && (
+            {!isFinished && isMyTurn && (!gameState.lastPlayedCards || gameState.lastPlayedCards.length === 0) && (
               <div style={{ 
                 textAlign: 'center',
                 marginBottom: '10px',
@@ -441,27 +475,52 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
               </div>
             )}
             
-            <Hand 
-              cards={myHand} 
-              selectedCards={selectedCards}
-              onCardClick={(card) => {
-                if (selectedCards.find(c => c.id === card.id)) {
-                  setSelectedCards(selectedCards.filter(c => c.id !== card.id));
-                } else {
-                  setSelectedCards([...selectedCards, card]);
-                }
-              }}
-              canPlay={isMyTurn}
-              isPlayer={true}
-              windowWidth={windowSize.width}
-              onReorder={(newOrder) => {
-                console.log('📤 发送手牌顺序到服务器:', newOrder.length, '张');
-                socket.emit('reorderCards', { cards: newOrder });
-              }}
-            />
+            {!isFinished && !isMyTurn && (
+              <div style={{ 
+                textAlign: 'center',
+                marginBottom: '10px',
+                color: '#aaa',
+                fontSize: '14px'
+              }}>
+                ⏳ 等待其他玩家出牌...
+              </div>
+            )}
+            
+            {!isFinished && (
+              <Hand 
+                cards={myHand} 
+                selectedCards={selectedCards}
+                onCardClick={(card) => {
+                  if (selectedCards.find(c => c.id === card.id)) {
+                    setSelectedCards(selectedCards.filter(c => c.id !== card.id));
+                  } else {
+                    setSelectedCards([...selectedCards, card]);
+                  }
+                }}
+                canPlay={isMyTurn}
+                isPlayer={true}
+                windowWidth={windowSize.width}
+                onReorder={(newOrder) => {
+                  console.log('📤 发送手牌顺序到服务器:', newOrder.length, '张');
+                  socket.emit('reorderCards', { cards: newOrder });
+                }}
+              />
+            )}
+            
+            {isFinished && (
+              <div style={{ 
+                textAlign: 'center',
+                padding: '20px',
+                color: '#888',
+                fontSize: '14px'
+              }}>
+                🎉 你已出完牌，正在观看其他玩家对战
+              </div>
+            )}
           </div>
           
-          {/* 出牌按钮和理牌按钮 - 放在手牌区域外面，确保可见 */}
+          {/* 出牌按钮和理牌按钮 - 观战时隐藏 */}
+          {!isFinished && (
           <div style={{
             display: 'flex',
             justifyContent: 'center',
@@ -561,6 +620,7 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
               {!isMyTurn ? '等待中...' : '过'}
             </button>
           </div>
+          )}
         </div>
       </div>
       

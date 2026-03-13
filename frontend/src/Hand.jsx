@@ -5,11 +5,11 @@ import Card from './Card.jsx';
  * 手牌组件 - 支持自由拖拽排序（不自动排序）
  */
 export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPlayer, windowWidth, onReorder }) {
-  const [localSelected, setLocalSelected] = useState([]);
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [isSliding, setIsSliding] = useState(false); // 是否正在滑动选牌
   const [slideDirection, setSlideDirection] = useState(null); // 'select' or 'deselect'
-  const slidCardsRef = useRef(new Set()); // 记录已经处理过的牌，避免重复触发
+  const hasSlidRef = useRef(false); // 是否真正滑动过（用于区分单击和滑动）
+  const slidCardsRef = useRef(new Set()); // 记录已处理的牌，避免重复触发
   // 使用用户自定义的顺序，如果没有则用原始顺序
   const [cardOrder, setCardOrder] = useState(cards.map(c => c.id));
   const handRef = useRef(null);
@@ -57,13 +57,6 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     }
   }, [cards]);
   
-  // 当外部 selectedCards 清空时，同步清空本地选中状态
-  useEffect(() => {
-    if (!selectedCards || selectedCards.length === 0) {
-      setLocalSelected([]);
-    }
-  }, [selectedCards]);
-  
   if (!cards || cards.length === 0) {
     return <div style={{ padding: '20px', color: '#999', textAlign: 'center' }}>手牌为空</div>;
   }
@@ -101,11 +94,9 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     const isInTopHalf = clickY < cardRect.height / 2;
     
     if (isInTopHalf && canPlay) {
-      // 滑动选牌模式 - 阻止默认和冒泡
-      e.preventDefault();
-      e.stopPropagation();
-      
+      // 滑动选牌模式 - 不阻止 onClick，让单击能正常触发
       setIsSliding(true);
+      hasSlidRef.current = false; // 重置滑动标记
       slidCardsRef.current.clear(); // 清空已处理记录
       
       const card = orderedCards[index];
@@ -128,6 +119,9 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     const clientX = e.type.includes('touch') ? (e.touches[0]?.clientX || 0) : e.clientX;
     const clientY = e.type.includes('touch') ? (e.touches[0]?.clientY || 0) : e.clientY;
     
+    // 标记真正滑动了（区分单击和滑动）
+    hasSlidRef.current = true;
+    
     // 精确检测：遍历所有卡牌，检查鼠标是否在卡牌实际渲染区域内
     const cardContainers = handRef.current.querySelectorAll('[data-card-index]');
     
@@ -148,12 +142,8 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
           const currentlySelected = isSelected(card);
           const shouldSelect = slideDirection === 'select';
           
-          // 根据滑动方向选中或取消选中
-          if (shouldSelect && !currentlySelected) {
-            setLocalSelected(prev => [...prev, card.id]);
-            if (onCardClick) onCardClick(card);
-          } else if (!shouldSelect && currentlySelected) {
-            setLocalSelected(prev => prev.filter(id => id !== card.id));
+          // 根据滑动方向选中或取消选中 - 直接调用 onCardClick
+          if ((shouldSelect && !currentlySelected) || (!shouldSelect && currentlySelected)) {
             if (onCardClick) onCardClick(card);
           }
         }
@@ -223,6 +213,7 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
       setIsSliding(false);
       setSlideDirection(null);
       slidCardsRef.current.clear();
+      hasSlidRef.current = false; // 重置滑动标记
     }
     setDraggedIndex(null);
   };
@@ -247,25 +238,14 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
   const handleClick = (card) => {
     if (!isPlayer || !canPlay) return;
     
-    // 使用 isSelected 判断当前是否选中（包括 selectedCards 和 localSelected）
-    const currentlySelected = isSelected(card);
-    
-    // 切换选中状态 - 总是使用函数式更新确保获取最新状态
-    setLocalSelected(prev => {
-      if (prev.includes(card.id)) {
-        return prev.filter(id => id !== card.id);
-      } else {
-        return [...prev, card.id];
-      }
-    });
-    
+    // 直接调用父组件的 onCardClick 处理选中逻辑
     if (onCardClick) {
       onCardClick(card);
     }
   };
   
   const isSelected = (card) => {
-    return selectedCards?.some(c => c.id === card.id) || localSelected.includes(card.id);
+    return selectedCards?.some(c => c.id === card.id);
   };
   
   return (
@@ -301,6 +281,10 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
             onClick={(e) => {
               // 只在可以出牌时允许点击选牌
               if (canPlay && isPlayer) {
+                // 如果真正滑动过，不处理点击（由滑动处理）
+                if (hasSlidRef.current) {
+                  return;
+                }
                 // 单击上半边：切换选中状态
                 handleClick(card);
               }

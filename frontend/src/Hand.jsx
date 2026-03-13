@@ -219,12 +219,10 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     }
     if (isSliding) {
       console.log('✅ 滑动选牌结束');
-      // 延迟清除 isSliding，让 onClick 先执行
-      setTimeout(() => {
-        setIsSliding(false);
-        setSlideDirection(null);
-        slidCardsRef.current.clear();
-      }, 0);
+      // 立即清除滑动状态，让 onClick 能正常触发
+      setIsSliding(false);
+      setSlideDirection(null);
+      slidCardsRef.current.clear();
     }
     setDraggedIndex(null);
   };
@@ -252,12 +250,14 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     // 使用 isSelected 判断当前是否选中（包括 selectedCards 和 localSelected）
     const currentlySelected = isSelected(card);
     
-    // 切换选中状态
-    if (currentlySelected) {
-      setLocalSelected(prev => prev.filter(id => id !== card.id));
-    } else {
-      setLocalSelected(prev => [...prev, card.id]);
-    }
+    // 切换选中状态 - 总是使用函数式更新确保获取最新状态
+    setLocalSelected(prev => {
+      if (prev.includes(card.id)) {
+        return prev.filter(id => id !== card.id);
+      } else {
+        return [...prev, card.id];
+      }
+    });
     
     if (onCardClick) {
       onCardClick(card);

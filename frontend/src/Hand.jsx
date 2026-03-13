@@ -219,11 +219,12 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     }
     if (isSliding) {
       console.log('✅ 滑动选牌结束');
-      // 如果滑动过程中没有选中任何牌（单击），在 onClick 中处理
-      // 如果滑动选中了牌，已经在 handleSlideMove 中处理了
-      setIsSliding(false);
-      setSlideDirection(null);
-      slidCardsRef.current.clear();
+      // 延迟清除 isSliding，让 onClick 先执行
+      setTimeout(() => {
+        setIsSliding(false);
+        setSlideDirection(null);
+        slidCardsRef.current.clear();
+      }, 0);
     }
     setDraggedIndex(null);
   };
@@ -296,10 +297,6 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
             onClick={(e) => {
               // 只在可以出牌时允许点击选牌
               if (canPlay && isPlayer) {
-                // 如果是滑动模式且已经滑动过，不处理（由滑动处理）
-                if (isSliding && slidCardsRef.current.size > 0) {
-                  return;
-                }
                 // 单击上半边：切换选中状态
                 handleClick(card);
               }

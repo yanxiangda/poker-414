@@ -182,31 +182,42 @@ export function canPlay(prevHand, newHand) {
   
   // 张数不同，检查特殊规则
   if (prev.count !== newHandAnalysis.count) {
-    // 炸可以管单张（包括单王）
-    if (prev.type === HAND_TYPE.SINGLE && 
-        newHandAnalysis.type === HAND_TYPE.BOMB) {
-      return true;
+    // ===== 幺牌可以管单张、一对、顺子、双龙 =====
+    if (newHandAnalysis.type === HAND_TYPE.YAO) {
+      if (prev.type === HAND_TYPE.SINGLE) return true;
+      if (prev.type === HAND_TYPE.PAIR) return true;
+      if (prev.type === HAND_TYPE.STRAIGHT) return true;
+      if (prev.type === HAND_TYPE.DOUBLE_STRAIGHT) return true;
     }
     
-    // 炸可以管对子
-    if (prev.type === HAND_TYPE.PAIR && 
-        newHandAnalysis.type === HAND_TYPE.BOMB) {
-      return true;
+    // ===== 王组合可以管单张、一对、顺子（需要≥2 张王）=====
+    if (newHandAnalysis.type === HAND_TYPE.KING_COMBO && newHandAnalysis.count >= 2) {
+      if (prev.type === HAND_TYPE.SINGLE) return true;
+      if (prev.type === HAND_TYPE.PAIR) return true;
+      if (prev.type === HAND_TYPE.STRAIGHT) return true;
+      // 王组合路数≥4 可以管双龙
+      if (prev.type === HAND_TYPE.DOUBLE_STRAIGHT && newHandAnalysis.road >= 4) return true;
     }
     
-    // 幺牌可以管单张
-    if (prev.type === HAND_TYPE.SINGLE && 
-        newHandAnalysis.type === HAND_TYPE.YAO) {
-      return true;
+    // ===== 双龙可以管顺子（长度相同，比大小）=====
+    if (prev.type === HAND_TYPE.STRAIGHT && 
+        newHandAnalysis.type === HAND_TYPE.DOUBLE_STRAIGHT &&
+        prev.count === newHandAnalysis.count / 2) {
+      return newHandAnalysis.value > prev.value;
     }
     
-    // 幺牌可以管对子
-    if (prev.type === HAND_TYPE.PAIR && 
-        newHandAnalysis.type === HAND_TYPE.YAO) {
-      return true;
+    // ===== 炸的规则 =====
+    // 炸可以管单张、一对
+    if (newHandAnalysis.type === HAND_TYPE.BOMB) {
+      if (prev.type === HAND_TYPE.SINGLE) return true;
+      if (prev.type === HAND_TYPE.PAIR) return true;
+      // 3 张炸可以管顺子
+      if (prev.type === HAND_TYPE.STRAIGHT && newHandAnalysis.count >= 3) return true;
+      // 4 张炸可以管双龙
+      if (prev.type === HAND_TYPE.DOUBLE_STRAIGHT && newHandAnalysis.count >= 4) return true;
     }
     
-    // 幺牌可以管炸（幺牌路数 >= 炸的路数，幺牌是同路数最大的）
+    // 幺牌可以管炸（幺牌路数 >= 炸的路数）
     if (prev.type === HAND_TYPE.BOMB && 
         newHandAnalysis.type === HAND_TYPE.YAO && 
         newHandAnalysis.road >= prev.road) {
@@ -220,32 +231,11 @@ export function canPlay(prevHand, newHand) {
       return true;
     }
     
-    // 3 路以上的炸可以管王组合（大小王）
+    // 3 张以上的炸可以管王组合
     if (prev.type === HAND_TYPE.KING_COMBO && 
-        newHandAnalysis.type === HAND_TYPE.BOMB && 
-        newHandAnalysis.road >= 3) {
-      return true;
-    }
-    
-    // 3 张炸可以管顺子
-    if (prev.type === HAND_TYPE.STRAIGHT && 
         newHandAnalysis.type === HAND_TYPE.BOMB && 
         newHandAnalysis.count >= 3) {
       return true;
-    }
-    
-    // 4 张炸可以管双龙
-    if (prev.type === HAND_TYPE.DOUBLE_STRAIGHT && 
-        newHandAnalysis.type === HAND_TYPE.BOMB && 
-        newHandAnalysis.count >= 4) {
-      return true;
-    }
-    
-    // 双龙可以管顺子（数量相同）
-    if (prev.type === HAND_TYPE.STRAIGHT && 
-        newHandAnalysis.type === HAND_TYPE.DOUBLE_STRAIGHT &&
-        prev.count === newHandAnalysis.count / 2) {
-      return newHandAnalysis.value > prev.value;
     }
     
     // 张数不同且不是特殊规则，不能管

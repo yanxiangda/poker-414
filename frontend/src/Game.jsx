@@ -386,6 +386,25 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
               <div style={{ color: '#999', fontSize: '16px' }}>等待出牌</div>
             )}
             
+            {/* 底池分数显示 */}
+            {gameState.potScore !== undefined && gameState.potScore > 0 && (
+              <div style={{
+                position: 'absolute',
+                bottom: '5px',
+                right: '10px',
+                backgroundColor: 'rgba(255, 215, 0, 0.9)',
+                color: '#000',
+                padding: '4px 10px',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                zIndex: 20
+              }}>
+                💰 {gameState.potScore}分
+              </div>
+            )}
+            
             {gameState.messages?.[gameState.messages.length - 1]?.includes('借光') && (
               <div style={{
                 position: 'absolute',

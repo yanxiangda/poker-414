@@ -1,0 +1,24 @@
+{
+  "name": "poker-414-singleplayer",
+  "version": "1.0.0",
+  "description": "> 经典东北扑克游戏，在线联机对战！支持 2-6 人实时对战，还原地道东北抛幺规则。",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yanxiangda/poker-414.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/yanxiangda/poker-414/issues"
+  },
+  "homepage": "https://github.com/yanxiangda/poker-414#readme",
+  "dependencies": {
+    "playwright": "^1.58.2"
+  }
+}

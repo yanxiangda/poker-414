@@ -103,6 +103,7 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     if (isInTopHalf && canPlay) {
       // 滑动选牌模式 - 阻止事件冒泡
       e.stopPropagation();
+      e.preventDefault();
       
       setIsSliding(true);
       slidCardsRef.current.clear(); // 清空已处理记录
@@ -300,8 +301,8 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
             onMouseDown={(e) => handleMouseDown(e, index)}
             onTouchStart={(e) => handleMouseDown(e, index)}
             onClick={(e) => {
-              // 只在可以出牌时允许点击选牌
-              if (canPlay && isPlayer) {
+              // 只在可以出牌时允许点击选牌，且没有滑动过（避免与滑动选牌冲突）
+              if (canPlay && isPlayer && slidCardsRef.current.size === 0) {
                 handleClick(card);
               }
             }}

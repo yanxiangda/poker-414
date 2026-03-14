@@ -561,19 +561,30 @@ function checkRoundEnd(room) {
     return; // 直接返回，不再执行后续逻辑
   }
   
-  // 借光规则：出完牌的玩家，同队下一个有手牌的玩家获得先手出牌权
-  // 4 人局中，队友位置固定：0↔2, 1↔3，所以直接找 (playerIndex + 2) % 4
-  const teammate = (playerIndex + 2) % room.players.length;
+  // 借光规则：出完牌的玩家，按出牌顺序找第一个还持有手牌的队友
+  // 从下一家开始按顺序找，只找队友（team 相同），找到第一个有手牌的
+  let nextTeammate = (playerIndex + 1) % room.players.length;
+  let foundTeammate = -1;
   
-  // 如果队友还有手牌，借光给他（成为先手）
-  if (room.hands[teammate] && room.hands[teammate].length > 0) {
-    room.currentPlayer = teammate;
+  // 最多遍历一圈
+  for (let i = 0; i < room.players.length; i++) {
+    // 检查是否是队友且有手牌
+    if (nextTeammate % 2 === team && room.hands[nextTeammate] && room.hands[nextTeammate].length > 0) {
+      foundTeammate = nextTeammate;
+      break;
+    }
+    nextTeammate = (nextTeammate + 1) % room.players.length;
+  }
+  
+  // 如果找到有手牌的队友，借光给他（成为先手）
+  if (foundTeammate !== -1) {
+    room.currentPlayer = foundTeammate;
     room.tableCards = [];
     room.lastPlayedCards = []; // 清空，成为先手
     room.passCount = 0;
-    room.messages.push(`✨ 借光！${room.players[teammate].name}获得出牌权`);
+    room.messages.push(`✨ 借光！${room.players[foundTeammate].name}获得出牌权`);
   } else {
-    // 队友也没牌了，按正常顺序找下一个有手牌的玩家
+    // 没有队友有手牌了，按正常顺序找下一个有手牌的玩家（可能是对手）
     let nextPlayer = (playerIndex + 1) % room.players.length;
     while (room.hands[nextPlayer] && room.hands[nextPlayer].length === 0) {
       nextPlayer = (nextPlayer + 1) % room.players.length;

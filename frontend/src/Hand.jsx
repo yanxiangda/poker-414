@@ -151,11 +151,26 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     }
   };
   
+  // 检测是否是垂直滑动（用于区分滚动和滑动选牌）
+  const isVerticalSlide = (startY, currentY) => {
+    const deltaY = Math.abs(currentY - startY);
+    return deltaY > 10; // 垂直移动超过 10px 认为是滚动
+  };
+  
   // 拖拽移动 - 直接在事件处理中使用最新值
   const handleMouseMove = (e) => {
+    const clientX = e.type.includes('touch') ? (e.touches[0]?.clientX || 0) : e.clientX;
+    const clientY = e.type.includes('touch') ? (e.touches[0]?.clientY || 0) : e.clientY;
+    
     // 如果是滑动选牌模式
     if (isSliding) {
-      e.preventDefault(); // 阻止页面滚动
+      // 检测是否是垂直滑动（用户想滚动页面）
+      if (isVerticalSlide(slideStartYRef.current, clientY)) {
+        // 用户垂直滑动，允许页面滚动，不处理滑动选牌
+        return;
+      }
+      // 水平滑动，阻止页面滚动并处理选牌
+      e.preventDefault();
       handleSlideMove(e);
       return;
     }
@@ -163,7 +178,6 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     const currentIndex = draggedIndex;
     if (currentIndex === null || !handRef.current) return;
     
-    const clientX = e.type.includes('touch') ? (e.touches[0]?.clientX || 0) : e.clientX;
     const handRect = handRef.current.getBoundingClientRect();
     
     // 计算鼠标移动的距离
@@ -267,9 +281,12 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
         WebkitOverflowScrolling: 'touch',
         flexShrink: 0,
         userSelect: 'none',
-        touchAction: 'none',
+        touchAction: isSliding ? 'none' : 'pan-x', // 滑动选牌时禁止滚动，否则允许横向滚动
         position: 'relative',
-        zIndex: 1
+        zIndex: 1,
+        // 确保滚动区域可见
+        scrollbarWidth: 'thin',
+        scrollbarColor: 'rgba(255,255,255,0.3) transparent'
       }}
     >
       {orderedCards.map((card, index) => {

@@ -66,7 +66,7 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
   
   const isMobile = windowW < 768;
   const isSmallMobile = windowW < 400;
-  const overlapCss = isSmallMobile ? '-8px' : isMobile ? '-12px' : '-18px';
+  const overlapCss = isSmallMobile ? '-12px' : isMobile ? '-20px' : '-28px'; // 增加重叠度
   
   // 拖拽移动（使用 ref 保存当前手牌顺序）
   const cardOrderRef = useRef(cardOrder);
@@ -186,7 +186,7 @@ export default function Hand({ cards, onCardClick, selectedCards, canPlay, isPla
     
     // 使用实际的牌宽度和重叠计算
     const currentCardWidth = isSmallMobile ? 42 : isMobile ? 48 : 60;
-    const currentOverlap = isSmallMobile ? 8 : isMobile ? 12 : 18;
+    const currentOverlap = isSmallMobile ? 12 : isMobile ? 20 : 28; // 与 overlapCss 保持一致
     const stepWidth = currentCardWidth - currentOverlap;
     
     // 计算移动了多少个位置（至少移动半个牌宽才交换）

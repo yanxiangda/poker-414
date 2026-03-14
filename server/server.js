@@ -562,26 +562,22 @@ function checkRoundEnd(room) {
   }
   
   // 借光规则：出完牌的玩家，同队下一个有手牌的玩家获得先手出牌权
-  let nextPlayer = (playerIndex + 1) % room.players.length;
-  while (room.hands[nextPlayer] && room.hands[nextPlayer].length === 0) {
-    nextPlayer = (nextPlayer + 1) % room.players.length;
-  }
+  // 4 人局中，队友位置固定：0↔2, 1↔3，所以直接找 (playerIndex + 2) % 4
+  const teammate = (playerIndex + 2) % room.players.length;
   
-  // 找到同队下一个有手牌的玩家
-  let teammate = nextPlayer;
-  while (teammate % 2 !== team && room.hands[teammate] && room.hands[teammate].length > 0) {
-    teammate = (teammate + 1) % room.players.length;
-  }
-  
-  // 如果找到同队有手牌的玩家，借光给他
-  if (teammate % 2 === team && room.hands[teammate] && room.hands[teammate].length > 0) {
+  // 如果队友还有手牌，借光给他（成为先手）
+  if (room.hands[teammate] && room.hands[teammate].length > 0) {
     room.currentPlayer = teammate;
     room.tableCards = [];
     room.lastPlayedCards = []; // 清空，成为先手
     room.passCount = 0;
     room.messages.push(`✨ 借光！${room.players[teammate].name}获得出牌权`);
   } else {
-    // 没有同队玩家可借光，正常继续
+    // 队友也没牌了，按正常顺序找下一个有手牌的玩家
+    let nextPlayer = (playerIndex + 1) % room.players.length;
+    while (room.hands[nextPlayer] && room.hands[nextPlayer].length === 0) {
+      nextPlayer = (nextPlayer + 1) % room.players.length;
+    }
     room.currentPlayer = nextPlayer;
   }
   

@@ -182,6 +182,11 @@ export function canPlay(prevHand, newHand) {
   
   // 张数不同，检查特殊规则
   if (prev.count !== newHandAnalysis.count) {
+    // 炸 vs 炸：张数多直接赢
+    if (prev.type === HAND_TYPE.BOMB && newHandAnalysis.type === HAND_TYPE.BOMB) {
+      return newHandAnalysis.count > prev.count;
+    }
+    
     // 炸可以管单张（包括单王）
     if (prev.type === HAND_TYPE.SINGLE && 
         newHandAnalysis.type === HAND_TYPE.BOMB) {

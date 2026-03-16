@@ -407,12 +407,16 @@ io.on('connection', (socket) => {
     // 检查是否出完
     if (room.hands[playerIndex].length === 0) {
       room.messages.push(`✨ ${room.players[playerIndex].name}出完牌了！`);
-      // 出完牌的玩家不再参与，currentPlayer 跳过该玩家
+      // 出完牌的玩家不再参与，但该轮还要继续，让其他玩家按顺序出牌/过
+      // 标记该玩家已出完，currentPlayer 移到下一家
       room.currentPlayer = (playerIndex + 1) % room.players.length;
       while (room.hands[room.currentPlayer] && room.hands[room.currentPlayer].length === 0) {
         room.currentPlayer = (room.currentPlayer + 1) % room.players.length;
       }
-      checkRoundEnd(room);
+      // 检查是否所有其他玩家都过过（如果是，触发借光）
+      // 否则继续让下一家出牌
+      room.broadcast('gameUpdate', room.toGameState());
+      checkBotTurn(room); // 检查下一个是否是机器人
     } else {
       room.currentPlayer = (playerIndex + 1) % room.players.length;
       room.broadcast('gameUpdate', room.toGameState());
@@ -467,8 +471,62 @@ io.on('connection', (socket) => {
     room.passCount++;
     room.messages.push(`✋ ${room.players[playerIndex].name}过`);
     
+    // 检查是否有人刚出完牌
+    const finishedPlayerIndex = room.hands.findIndex((h, i) => h.length === 0);
+    const hasFinishedPlayer = finishedPlayerIndex !== -1;
+    
     if (room.passCount >= room.players.length - 1) {
-      // 一轮结束，上轮赢家（lastPlayer）先出牌
+      // 所有人都过了，检查是否有玩家刚出完牌
+      if (hasFinishedPlayer) {
+        // 触发借光规则：出完牌的玩家，按出牌顺序找第一个还持有手牌的队友
+        const finishedTeam = finishedPlayerIndex % 2;
+        let nextTeammate = (finishedPlayerIndex + 1) % room.players.length;
+        let foundTeammate = -1;
+        
+        // 最多遍历一圈
+        for (let i = 0; i < room.players.length; i++) {
+          // 检查是否是队友且有手牌
+          if (nextTeammate % 2 === finishedTeam && room.hands[nextTeammate] && room.hands[nextTeammate].length > 0) {
+            foundTeammate = nextTeammate;
+            break;
+          }
+          nextTeammate = (nextTeammate + 1) % room.players.length;
+        }
+        
+        // 如果找到有手牌的队友，借光给他（成为先手）
+        if (foundTeammate !== -1) {
+          room.currentPlayer = foundTeammate;
+          room.tableCards = [];
+          room.lastPlayedCards = []; // 清空，成为先手
+          room.passCount = 0;
+          room.messages.push(`✨ 借光！${room.players[foundTeammate].name}获得出牌权`);
+          
+          // 检查是否有队伍出完牌
+          const team0Finished = room.hands.some((h, i) => i % 2 === 0 && h.length === 0);
+          const team1Finished = room.hands.some((h, i) => i % 2 === 1 && h.length === 0);
+          
+          if (team0Finished && !room.firstFinishedTeam) {
+            room.firstFinishedTeam = 0;
+            room.messages.push('🎉 A 队先出完牌！需要 135 分获胜');
+          } else if (team1Finished && !room.firstFinishedTeam) {
+            room.firstFinishedTeam = 1;
+            room.messages.push('🎉 B 队先出完牌！需要 135 分获胜');
+          }
+          
+          // 检查胜利
+          const victory = checkVictory(room.teamScores, room.firstFinishedTeam);
+          if (victory) {
+            room.gameState = 'finished';
+            room.messages.push(`🏆 ${victory.winner === 0 ? 'A 队' : 'B 队'}胜利！`);
+          }
+          
+          room.broadcast('gameUpdate', room.toGameState());
+          checkBotTurn(room);
+          return;
+        }
+      }
+      
+      // 没有触发借光，按正常流程：一轮结束，上轮赢家（lastPlayer）先出牌
       const score = calculateTableScore(room.tableCards);
       const winnerTeam = room.lastPlayer % 2 === 0 ? 0 : 1;
       room.teamScores[winnerTeam] += score;
@@ -537,8 +595,9 @@ function startGame(room) {
 }
 
 function checkRoundEnd(room) {
+  // 这个函数现在只在机器人出完牌时调用
+  // 借光逻辑已经移到 pass 处理中
   const playerIndex = room.currentPlayer;
-  const team = playerIndex % 2;
   
   // 检查是否有队伍出完牌
   const team0Finished = room.hands.some((h, i) => i % 2 === 0 && h.length === 0);
@@ -556,45 +615,18 @@ function checkRoundEnd(room) {
   if (victory) {
     room.gameState = 'finished';
     room.messages.push(`🏆 ${victory.winner === 0 ? 'A 队' : 'B 队'}胜利！`);
-    // 游戏结束，广播最终状态
     room.broadcast('gameUpdate', room.toGameState());
-    return; // 直接返回，不再执行后续逻辑
+    return;
   }
   
-  // 借光规则：出完牌的玩家，按出牌顺序找第一个还持有手牌的队友
-  // 从下一家开始按顺序找，只找队友（team 相同），找到第一个有手牌的
-  let nextTeammate = (playerIndex + 1) % room.players.length;
-  let foundTeammate = -1;
-  
-  // 最多遍历一圈
-  for (let i = 0; i < room.players.length; i++) {
-    // 检查是否是队友且有手牌
-    if (nextTeammate % 2 === team && room.hands[nextTeammate] && room.hands[nextTeammate].length > 0) {
-      foundTeammate = nextTeammate;
-      break;
-    }
-    nextTeammate = (nextTeammate + 1) % room.players.length;
+  // 按正常顺序找下一个有手牌的玩家
+  let nextPlayer = (playerIndex + 1) % room.players.length;
+  while (room.hands[nextPlayer] && room.hands[nextPlayer].length === 0) {
+    nextPlayer = (nextPlayer + 1) % room.players.length;
   }
-  
-  // 如果找到有手牌的队友，借光给他（成为先手）
-  if (foundTeammate !== -1) {
-    room.currentPlayer = foundTeammate;
-    room.tableCards = [];
-    room.lastPlayedCards = []; // 清空，成为先手
-    room.passCount = 0;
-    room.messages.push(`✨ 借光！${room.players[foundTeammate].name}获得出牌权`);
-  } else {
-    // 没有队友有手牌了，按正常顺序找下一个有手牌的玩家（可能是对手）
-    let nextPlayer = (playerIndex + 1) % room.players.length;
-    while (room.hands[nextPlayer] && room.hands[nextPlayer].length === 0) {
-      nextPlayer = (nextPlayer + 1) % room.players.length;
-    }
-    room.currentPlayer = nextPlayer;
-  }
+  room.currentPlayer = nextPlayer;
   
   room.broadcast('gameUpdate', room.toGameState());
-  
-  // 检查下一个是否是机器人出牌
   checkBotTurn(room);
 }
 
@@ -651,12 +683,14 @@ function checkBotTurn(room) {
       
       if (room.hands[botIndex].length === 0) {
         room.messages.push(`✨ ${currentPlayer.name}出完牌了！`);
-        // 出完牌的玩家不再参与，currentPlayer 跳过该玩家
+        // 出完牌的玩家不再参与，但该轮还要继续，让其他玩家按顺序出牌/过
         room.currentPlayer = (botIndex + 1) % room.players.length;
         while (room.hands[room.currentPlayer] && room.hands[room.currentPlayer].length === 0) {
           room.currentPlayer = (room.currentPlayer + 1) % room.players.length;
         }
-        checkRoundEnd(room);
+        // 继续游戏，让下一家出牌（借光逻辑在 pass 时处理）
+        room.broadcast('gameUpdate', room.toGameState());
+        checkBotTurn(room);
       } else {
         room.currentPlayer = (botIndex + 1) % room.players.length;
         room.broadcast('gameUpdate', room.toGameState());
@@ -668,14 +702,64 @@ function checkBotTurn(room) {
       room.messages.push(`✋ ${currentPlayer.name}过`);
       console.log(`✋ ${currentPlayer.name}过`);
       
+      // 检查是否有人刚出完牌
+      const finishedPlayerIndex = room.hands.findIndex((h, i) => h.length === 0);
+      const hasFinishedPlayer = finishedPlayerIndex !== -1;
+      
       if (room.passCount >= room.players.length - 1) {
+        // 所有人都过了，检查是否有玩家刚出完牌
+        if (hasFinishedPlayer) {
+          // 触发借光规则
+          const finishedTeam = finishedPlayerIndex % 2;
+          let nextTeammate = (finishedPlayerIndex + 1) % room.players.length;
+          let foundTeammate = -1;
+          
+          for (let i = 0; i < room.players.length; i++) {
+            if (nextTeammate % 2 === finishedTeam && room.hands[nextTeammate] && room.hands[nextTeammate].length > 0) {
+              foundTeammate = nextTeammate;
+              break;
+            }
+            nextTeammate = (nextTeammate + 1) % room.players.length;
+          }
+          
+          if (foundTeammate !== -1) {
+            room.currentPlayer = foundTeammate;
+            room.tableCards = [];
+            room.lastPlayedCards = [];
+            room.passCount = 0;
+            room.messages.push(`✨ 借光！${room.players[foundTeammate].name}获得出牌权`);
+            
+            const team0Finished = room.hands.some((h, i) => i % 2 === 0 && h.length === 0);
+            const team1Finished = room.hands.some((h, i) => i % 2 === 1 && h.length === 0);
+            
+            if (team0Finished && !room.firstFinishedTeam) {
+              room.firstFinishedTeam = 0;
+              room.messages.push('🎉 A 队先出完牌！需要 135 分获胜');
+            } else if (team1Finished && !room.firstFinishedTeam) {
+              room.firstFinishedTeam = 1;
+              room.messages.push('🎉 B 队先出完牌！需要 135 分获胜');
+            }
+            
+            const victory = checkVictory(room.teamScores, room.firstFinishedTeam);
+            if (victory) {
+              room.gameState = 'finished';
+              room.messages.push(`🏆 ${victory.winner === 0 ? 'A 队' : 'B 队'}胜利！`);
+            }
+            
+            room.broadcast('gameUpdate', room.toGameState());
+            checkBotTurn(room);
+            return;
+          }
+        }
+        
+        // 没有触发借光，按正常流程
         const score = calculateTableScore(room.tableCards);
         const winnerTeam = room.lastPlayer % 2 === 0 ? 0 : 1;
         room.teamScores[winnerTeam] += score;
         room.messages.push(`💰 ${room.players[room.lastPlayer].name}获得 ${score}分`);
         
         room.tableCards = [];
-        room.lastPlayedCards = []; // 清空最后一手牌
+        room.lastPlayedCards = [];
         room.passCount = 0;
         room.currentPlayer = room.lastPlayer;
         

@@ -76,6 +76,26 @@ export default function App() {
       setConnected(false);
     });
     
+    newSocket.on('disconnect', (reason) => {
+      console.log('Socket 断开连接:', reason);
+      setConnected(false);
+      if (reason === 'io server disconnect') {
+        setError('服务器断开连接，正在重连...');
+      }
+    });
+    
+    newSocket.on('reconnect', (attemptNumber) => {
+      console.log('Socket 重连成功，尝试次数:', attemptNumber);
+      setConnected(true);
+      setError('');
+      
+      // 重连后自动加入房间
+      if (savedState?.roomId && savedState?.playerName && screen === 'game') {
+        console.log('🔄 重连后自动加入房间:', savedState.roomId);
+        newSocket.emit('joinRoom', { playerName: savedState.playerName, roomId: savedState.roomId.toUpperCase() });
+      }
+    });
+    
     setSocket(newSocket);
 
     newSocket.on('roomCreated', (data) => {

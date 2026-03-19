@@ -578,7 +578,17 @@ io.on('connection', (socket) => {
     const playerInfo = players.get(socket.id);
     if (playerInfo) {
       const room = rooms.get(playerInfo.roomId);
-      if (room) {
+      if (room && room.gameState === 'playing') {
+        // 游戏进行中，只标记玩家断开，不删除（允许重连）
+        const player = room.getPlayer(socket.id);
+        if (player) {
+          player.disconnected = true;
+          console.log(`玩家 ${player.name} 断开连接，保留在房间中`);
+        }
+        // 仍然广播状态更新
+        io.to(playerInfo.roomId).emit('playerLeft', room.toGameState());
+      } else if (room) {
+        // 游戏未开始，正常退出
         room.removePlayer(socket.id);
         io.to(playerInfo.roomId).emit('playerLeft', room.toGameState());
         

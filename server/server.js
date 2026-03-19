@@ -536,16 +536,15 @@ io.on('connection', (socket) => {
           checkBotTurn(room);
           return;
         }
-      }
-      
-      // 没有触发借光，按正常流程：一轮结束，上轮赢家（lastPlayer）先出牌
-      // 清除借光标记（因为一轮已经结束了）
-      room.pendingLightBorrow = undefined;
-      
-      const score = calculateTableScore(room.tableCards);
-      const winnerTeam = room.lastPlayer % 2 === 0 ? 0 : 1;
-      room.teamScores[winnerTeam] += score;
-      room.messages.push(`💰 ${room.players[room.lastPlayer].name}获得 ${score}分`);
+      } else {
+        // 没有触发借光，按正常流程：一轮结束，上轮赢家（lastPlayer）先出牌
+        // 清除借光标记（因为一轮已经结束了）
+        room.pendingLightBorrow = undefined;
+        
+        const score = calculateTableScore(room.tableCards);
+        const winnerTeam = room.lastPlayer % 2 === 0 ? 0 : 1;
+        room.teamScores[winnerTeam] += score;
+        room.messages.push(`💰 ${room.players[room.lastPlayer].name}获得 ${score}分`);
       
       room.tableCards = [];
       room.lastPlayedCards = []; // 清空最后一手牌
@@ -561,6 +560,7 @@ io.on('connection', (socket) => {
       
       room.broadcast('gameUpdate', room.toGameState());
       checkBotTurn(room); // 检查下一个是否是机器人（上轮赢家可能是机器人）
+      }
     } else {
       // 移到下一个玩家，跳过已经出完牌的玩家
       room.currentPlayer = (playerIndex + 1) % room.players.length;
@@ -782,16 +782,15 @@ function checkBotTurn(room) {
             checkBotTurn(room);
             return;
           }
-        }
-        
-        // 没有触发借光，按正常流程
-        // 清除借光标记（因为一轮已经结束了）
-        room.pendingLightBorrow = undefined;
-        
-        const score = calculateTableScore(room.tableCards);
-        const winnerTeam = room.lastPlayer % 2 === 0 ? 0 : 1;
-        room.teamScores[winnerTeam] += score;
-        room.messages.push(`💰 ${room.players[room.lastPlayer].name}获得 ${score}分`);
+        } else {
+          // 没有触发借光，按正常流程
+          // 清除借光标记（因为一轮已经结束了）
+          room.pendingLightBorrow = undefined;
+          
+          const score = calculateTableScore(room.tableCards);
+          const winnerTeam = room.lastPlayer % 2 === 0 ? 0 : 1;
+          room.teamScores[winnerTeam] += score;
+          room.messages.push(`💰 ${room.players[room.lastPlayer].name}获得 ${score}分`);
         
         room.tableCards = [];
         room.lastPlayedCards = [];
@@ -806,6 +805,7 @@ function checkBotTurn(room) {
         
         room.broadcast('gameUpdate', room.toGameState());
         checkBotTurn(room);
+        }
       } else {
         // 移到下一个玩家，跳过已经出完牌的玩家
         room.currentPlayer = (room.currentPlayer + 1) % room.players.length;

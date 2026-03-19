@@ -231,7 +231,7 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '10px 20px',
+        padding: isMobile ? '6px 8px' : '10px 20px',
         backgroundColor: 'rgba(0,0,0,0.3)',
         flexShrink: 0,
         position: 'relative'
@@ -282,8 +282,8 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
       <div style={{
         display: 'flex',
         justifyContent: 'center',
-        gap: '20px',
-        padding: '10px',
+        gap: isMobile ? '10px' : '20px',
+        padding: isMobile ? '4px' : '10px',
         backgroundColor: 'rgba(0,0,0,0.2)',
         flexShrink: 0
       }}>
@@ -319,16 +319,16 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        padding: '10px 20px 20px'
+        padding: isMobile ? '4px 8px 8px' : '10px 20px 20px'
       }}>
         {/* 上方 - 所有其他玩家（环绕布局） */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-around',
           alignItems: 'center',
-          padding: isMobile ? '5px 10px' : '10px 20px',
+          padding: isMobile ? '2px 4px' : '10px 20px',
           flexWrap: 'wrap',
-          gap: isMobile ? '10px' : '20px'
+          gap: isMobile ? '8px' : '20px'
         }}>
           {otherPlayers.map((player, idx) => {
             if (idx === playerIndex) return null; // 跳过自己
@@ -350,7 +350,7 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
         {/* 中央 - 出牌区 */}
         <div style={{
           position: 'absolute',
-          top: isMobile ? '40%' : '50%',
+          top: isMobile ? '42%' : '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
           width: '100%',
@@ -359,18 +359,18 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '15px',
-          padding: '20px',
+          gap: isMobile ? '8px' : '15px',
+          padding: isMobile ? '4px' : '20px',
           zIndex: 5
         }}>
           <div style={{
             backgroundColor: '#fff',
             borderRadius: '16px',
-            padding: isMobile ? '10px 15px' : '15px 30px',
+            padding: isMobile ? '6px 10px' : '15px 30px',
             boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-            width: isMobile ? '80%' : '60%',
+            width: isMobile ? '90%' : '60%',
             maxWidth: '400px',
-            minHeight: isMobile ? '80px' : '100px',
+            minHeight: isMobile ? '70px' : '100px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -473,9 +473,9 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
             {!isFinished && isMyTurn && gameState.lastPlayedCards && gameState.lastPlayedCards.length > 0 && (
               <div style={{ 
                 textAlign: 'center',
-                marginBottom: '10px',
+                marginBottom: isMobile ? '4px' : '10px',
                 color: '#ffd700',
-                fontSize: '14px',
+                fontSize: isMobile ? '12px' : '14px',
                 fontWeight: 'bold'
               }}>
                 🎴 需要管上上面的牌
@@ -485,9 +485,9 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
             {!isFinished && isMyTurn && (!gameState.lastPlayedCards || gameState.lastPlayedCards.length === 0) && (
               <div style={{ 
                 textAlign: 'center',
-                marginBottom: '10px',
+                marginBottom: isMobile ? '4px' : '10px',
                 color: '#4CAF50',
-                fontSize: '14px',
+                fontSize: isMobile ? '12px' : '14px',
                 fontWeight: 'bold'
               }}>
                 ✨ 你是先手，任意出牌
@@ -497,9 +497,9 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
             {!isFinished && !isMyTurn && (
               <div style={{ 
                 textAlign: 'center',
-                marginBottom: '10px',
+                marginBottom: isMobile ? '4px' : '10px',
                 color: '#aaa',
-                fontSize: '14px'
+                fontSize: isMobile ? '12px' : '14px'
               }}>
                 ⏳ 等待其他玩家出牌...
               </div>
@@ -529,9 +529,9 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
             {isFinished && (
               <div style={{ 
                 textAlign: 'center',
-                padding: '20px',
+                padding: isMobile ? '8px' : '20px',
                 color: '#888',
-                fontSize: '14px'
+                fontSize: isMobile ? '12px' : '14px'
               }}>
                 🎉 你已出完牌，正在观看其他玩家对战
               </div>
@@ -543,8 +543,8 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
           <div style={{
             display: 'flex',
             justifyContent: 'center',
-            gap: isMobile ? '8px' : '15px',
-            padding: isMobile ? '6px 8px' : '10px 15px',
+            gap: isMobile ? '6px' : '15px',
+            padding: isMobile ? '4px 6px' : '10px 15px',
             backgroundColor: 'rgba(0,0,0,0.5)',
             flexWrap: 'wrap',
             flexShrink: 0,
@@ -599,8 +599,8 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
               }}
               disabled={!isMyTurn || selectedCards.length === 0 || !canPlayCards}
               style={{ 
-                padding: isMobile ? '10px 24px' : '14px 40px', 
-                fontSize: isMobile ? '16px' : '18px', 
+                padding: isMobile ? '8px 20px' : '14px 40px', 
+                fontSize: isMobile ? '14px' : '18px', 
                 fontWeight: 'bold',
                 cursor: (isMyTurn && selectedCards.length > 0 && canPlayCards) ? 'pointer' : 'not-allowed',
                 backgroundColor: (isMyTurn && selectedCards.length > 0 && canPlayCards) ? '#4CAF50' : '#666',
@@ -608,7 +608,7 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
                 border: 'none',
                 borderRadius: '30px',
                 boxShadow: (isMyTurn && selectedCards.length > 0 && canPlayCards) ? '0 4px 15px rgba(76, 175, 80, 0.4)' : 'none',
-                minWidth: '120px',
+                minWidth: isMobile ? '80px' : '120px',
                 opacity: !isMyTurn ? 0.5 : 1
               }}
             >
@@ -623,8 +623,8 @@ export default function Game({ socket, gameState, playerIndex, onLeave, roomId }
               }}
               disabled={!isMyTurn || gameState.lastPlayedCards?.length === 0}
               style={{ 
-                padding: isMobile ? '10px 24px' : '14px 40px', 
-                fontSize: isMobile ? '16px' : '18px', 
+                padding: isMobile ? '8px 20px' : '14px 40px', 
+                fontSize: isMobile ? '14px' : '18px', 
                 fontWeight: 'bold',
                 cursor: (isMyTurn && gameState.lastPlayedCards?.length > 0) ? 'pointer' : 'not-allowed',
                 backgroundColor: (isMyTurn && gameState.lastPlayedCards?.length > 0) ? '#ff9800' : '#666',

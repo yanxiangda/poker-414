@@ -418,7 +418,11 @@ io.on('connection', (socket) => {
       room.broadcast('gameUpdate', room.toGameState());
       checkBotTurn(room); // 检查下一个是否是机器人
     } else {
+      // 移到下一个玩家，跳过已经出完牌的玩家
       room.currentPlayer = (playerIndex + 1) % room.players.length;
+      while (room.hands[room.currentPlayer] && room.hands[room.currentPlayer].length === 0) {
+        room.currentPlayer = (room.currentPlayer + 1) % room.players.length;
+      }
       room.broadcast('gameUpdate', room.toGameState());
       checkBotTurn(room); // 检查下一个是否是机器人
     }
@@ -547,7 +551,11 @@ io.on('connection', (socket) => {
       room.broadcast('gameUpdate', room.toGameState());
       checkBotTurn(room); // 检查下一个是否是机器人（上轮赢家可能是机器人）
     } else {
+      // 移到下一个玩家，跳过已经出完牌的玩家
       room.currentPlayer = (playerIndex + 1) % room.players.length;
+      while (room.hands[room.currentPlayer] && room.hands[room.currentPlayer].length === 0) {
+        room.currentPlayer = (room.currentPlayer + 1) % room.players.length;
+      }
       room.broadcast('gameUpdate', room.toGameState());
       checkBotTurn(room); // 检查下一个是否是机器人
     }
@@ -692,7 +700,11 @@ function checkBotTurn(room) {
         room.broadcast('gameUpdate', room.toGameState());
         checkBotTurn(room);
       } else {
+        // 移到下一个玩家，跳过已经出完牌的玩家
         room.currentPlayer = (botIndex + 1) % room.players.length;
+        while (room.hands[room.currentPlayer] && room.hands[room.currentPlayer].length === 0) {
+          room.currentPlayer = (room.currentPlayer + 1) % room.players.length;
+        }
         room.broadcast('gameUpdate', room.toGameState());
         checkBotTurn(room); // 检查下一个是否是机器人
       }
@@ -772,7 +784,11 @@ function checkBotTurn(room) {
         room.broadcast('gameUpdate', room.toGameState());
         checkBotTurn(room);
       } else {
+        // 移到下一个玩家，跳过已经出完牌的玩家
         room.currentPlayer = (room.currentPlayer + 1) % room.players.length;
+        while (room.hands[room.currentPlayer] && room.hands[room.currentPlayer].length === 0) {
+          room.currentPlayer = (room.currentPlayer + 1) % room.players.length;
+        }
         room.broadcast('gameUpdate', room.toGameState());
         checkBotTurn(room);
       }

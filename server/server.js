@@ -579,14 +579,32 @@ io.on('connection', (socket) => {
     if (playerInfo) {
       const room = rooms.get(playerInfo.roomId);
       if (room && room.gameState === 'playing') {
-        // 游戏进行中，只标记玩家断开，不删除（允许重连）
+        // 游戏进行中，标记玩家断开，但不删除（允许重连）
         const player = room.getPlayer(socket.id);
         if (player) {
           player.disconnected = true;
           console.log(`玩家 ${player.name} 断开连接，保留在房间中`);
+          
+          // 如果当前是该玩家出牌，自动过牌并移到下一个玩家
+          const playerIndex = room.getPlayerIndex(socket.id);
+          if (playerIndex === room.currentPlayer && room.tableCards.length > 0) {
+            console.log(`当前出牌玩家断开，自动过牌`);
+            room.passCount++;
+            room.messages.push(`✋ ${player.name}断开连接，自动过`);
+            
+            // 移到下一个有手牌的玩家
+            room.currentPlayer = (playerIndex + 1) % room.players.length;
+            while (room.hands[room.currentPlayer] && room.hands[room.currentPlayer].length === 0) {
+              room.currentPlayer = (room.currentPlayer + 1) % room.players.length;
+            }
+            
+            room.broadcast('gameUpdate', room.toGameState());
+            checkBotTurn(room);
+          }
         }
         // 仍然广播状态更新
         io.to(playerInfo.roomId).emit('playerLeft', room.toGameState());
+        // 不从 players 删除，允许重连
       } else if (room) {
         // 游戏未开始，正常退出
         room.removePlayer(socket.id);
@@ -595,8 +613,41 @@ io.on('connection', (socket) => {
         if (room.players.length === 0) {
           rooms.delete(playerInfo.roomId);
         }
+        players.delete(socket.id);
+      } else {
+        players.delete(socket.id);
       }
-      players.delete(socket.id);
+    }
+  });
+  
+  // 重连恢复
+  socket.on('reconnect', (data) => {
+    console.log('玩家重连:', socket.id, data);
+    const roomId = (data.roomId || '').toUpperCase();
+    const room = rooms.get(roomId);
+    
+    if (!room || room.gameState !== 'playing') {
+      console.log('重连失败：房间不存在或游戏未进行中');
+      socket.emit('error', { message: '无法重连，房间不存在或游戏已结束' });
+      return;
+    }
+    
+    // 查找原来的玩家记录（通过 playerName 匹配）
+    const playerIndex = room.players.findIndex(p => p.name === data.playerName && p.disconnected);
+    if (playerIndex !== -1) {
+      // 恢复玩家连接
+      const player = room.players[playerIndex];
+      player.socketId = socket.id;
+      player.disconnected = false;
+      players.set(socket.id, { roomId, name: data.playerName });
+      
+      socket.join(roomId);
+      console.log(`玩家 ${data.playerName} 重连成功`);
+      socket.emit('roomJoined', { roomId, playerIndex });
+      io.to(roomId).emit('playerJoined', room.toGameState());
+    } else {
+      console.log('重连失败：找不到玩家记录');
+      socket.emit('error', { message: '无法重连，请重新加入房间' });
     }
   });
 });

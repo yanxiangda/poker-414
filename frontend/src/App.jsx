@@ -65,7 +65,13 @@ export default function App() {
       if (savedState?.roomId && savedState?.playerName) {
         console.log('🔌 自动加入房间:', savedState.roomId, savedState.playerName);
         setTimeout(() => {
-          newSocket.emit('joinRoom', { playerName: savedState.playerName, roomId: savedState.roomId.toUpperCase() });
+          // 如果是在游戏中，尝试重连恢复
+          if (screen === 'game' && gameState) {
+            console.log('🔄 尝试重连恢复游戏');
+            newSocket.emit('reconnect', { roomId: savedState.roomId.toUpperCase(), playerName: savedState.playerName });
+          } else {
+            newSocket.emit('joinRoom', { playerName: savedState.playerName, roomId: savedState.roomId.toUpperCase() });
+          }
         }, 500);
       }
     });
@@ -89,10 +95,10 @@ export default function App() {
       setConnected(true);
       setError('');
       
-      // 重连后自动加入房间
+      // 重连后自动恢复房间
       if (savedState?.roomId && savedState?.playerName && screen === 'game') {
-        console.log('🔄 重连后自动加入房间:', savedState.roomId);
-        newSocket.emit('joinRoom', { playerName: savedState.playerName, roomId: savedState.roomId.toUpperCase() });
+        console.log('🔄 重连后恢复房间:', savedState.roomId);
+        newSocket.emit('reconnect', { roomId: savedState.roomId.toUpperCase(), playerName: savedState.playerName });
       }
     });
     

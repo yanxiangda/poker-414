@@ -478,14 +478,6 @@ io.on('connection', (socket) => {
     room.messages.push(`✋ ${room.players[playerIndex].name}过`);
     
     if (room.passCount >= room.players.length - 1) {
-      // 所有人都过了，先计算桌上的分数
-      const score = calculateTableScore(room.tableCards);
-      const winnerTeam = room.lastPlayer % 2 === 0 ? 0 : 1;
-      room.teamScores[winnerTeam] += score;
-      if (score > 0) {
-        room.messages.push(`💰 ${room.players[room.lastPlayer].name}获得 ${score}分`);
-      }
-      
       // 检查是否有待处理的借光
       if (room.pendingLightBorrow !== undefined) {
         // 触发借光规则：出完牌的玩家，按出牌顺序找第一个还持有手牌的队友
@@ -506,6 +498,14 @@ io.on('connection', (socket) => {
         
         // 如果找到有手牌的队友，借光给他（成为先手）
         if (foundTeammate !== -1) {
+          // 先计算桌上的分数
+          const score = calculateTableScore(room.tableCards);
+          const winnerTeam = room.lastPlayer % 2 === 0 ? 0 : 1;
+          room.teamScores[winnerTeam] += score;
+          if (score > 0) {
+            room.messages.push(`💰 ${room.players[room.lastPlayer].name}获得 ${score}分`);
+          }
+          
           room.currentPlayer = foundTeammate;
           room.tableCards = [];
           room.lastPlayedCards = []; // 清空，成为先手
@@ -729,14 +729,6 @@ function checkBotTurn(room) {
       console.log(`✋ ${currentPlayer.name}过`);
       
       if (room.passCount >= room.players.length - 1) {
-        // 所有人都过了，先计算桌上的分数
-        const score = calculateTableScore(room.tableCards);
-        const winnerTeam = room.lastPlayer % 2 === 0 ? 0 : 1;
-        room.teamScores[winnerTeam] += score;
-        if (score > 0) {
-          room.messages.push(`💰 ${room.players[room.lastPlayer].name}获得 ${score}分`);
-        }
-        
         // 检查是否有待处理的借光
         if (room.pendingLightBorrow !== undefined) {
           // 触发借光规则
@@ -754,6 +746,14 @@ function checkBotTurn(room) {
           }
           
           if (foundTeammate !== -1) {
+            // 先计算桌上的分数
+            const score = calculateTableScore(room.tableCards);
+            const winnerTeam = room.lastPlayer % 2 === 0 ? 0 : 1;
+            room.teamScores[winnerTeam] += score;
+            if (score > 0) {
+              room.messages.push(`💰 ${room.players[room.lastPlayer].name}获得 ${score}分`);
+            }
+            
             room.currentPlayer = foundTeammate;
             room.tableCards = [];
             room.lastPlayedCards = [];

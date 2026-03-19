@@ -407,6 +407,8 @@ io.on('connection', (socket) => {
     // 检查是否出完
     if (room.hands[playerIndex].length === 0) {
       room.messages.push(`✨ ${room.players[playerIndex].name}出完牌了！`);
+      // 设置借光待处理标记（只触发一次）
+      room.pendingLightBorrow = playerIndex;
       // 出完牌的玩家不再参与，但该轮还要继续，让其他玩家按顺序出牌/过
       // 标记该玩家已出完，currentPlayer 移到下一家
       room.currentPlayer = (playerIndex + 1) % room.players.length;
@@ -475,16 +477,11 @@ io.on('connection', (socket) => {
     room.passCount++;
     room.messages.push(`✋ ${room.players[playerIndex].name}过`);
     
-    // 检查是否有人刚出完牌（且这轮还没触发过借光）
-    const finishedPlayerIndex = room.hands.findIndex((h, i) => h.length === 0);
-    const hasFinishedPlayer = finishedPlayerIndex !== -1;
-    // 如果桌上没牌且 passCount 刚重置，说明已经借光过了，不要再触发
-    const alreadyBorrowedLight = room.tableCards.length === 0 && room.passCount === 1;
-    
     if (room.passCount >= room.players.length - 1) {
-      // 所有人都过了，检查是否有玩家刚出完牌且还没触发借光
-      if (hasFinishedPlayer && !alreadyBorrowedLight) {
+      // 所有人都过了，检查是否有待处理的借光
+      if (room.pendingLightBorrow !== undefined) {
         // 触发借光规则：出完牌的玩家，按出牌顺序找第一个还持有手牌的队友
+        const finishedPlayerIndex = room.pendingLightBorrow;
         const finishedTeam = finishedPlayerIndex % 2;
         let nextTeammate = (finishedPlayerIndex + 1) % room.players.length;
         let foundTeammate = -1;
@@ -505,11 +502,8 @@ io.on('connection', (socket) => {
           room.tableCards = [];
           room.lastPlayedCards = []; // 清空，成为先手
           room.passCount = 0;
-          // 只在没有借光消息时才添加（避免重复）
-          const lastMsg = room.messages[room.messages.length - 1];
-          if (!lastMsg || !lastMsg.includes('借光')) {
-            room.messages.push(`✨ 借光！${room.players[foundTeammate].name}获得出牌权`);
-          }
+          room.pendingLightBorrow = undefined; // 清除标记，防止重复触发
+          room.messages.push(`✨ 借光！${room.players[foundTeammate].name}获得出牌权`);
           
           // 检查是否有队伍出完牌
           const team0Finished = room.hands.some((h, i) => i % 2 === 0 && h.length === 0);
@@ -537,6 +531,9 @@ io.on('connection', (socket) => {
       }
       
       // 没有触发借光，按正常流程：一轮结束，上轮赢家（lastPlayer）先出牌
+      // 清除借光标记（因为一轮已经结束了）
+      room.pendingLightBorrow = undefined;
+      
       const score = calculateTableScore(room.tableCards);
       const winnerTeam = room.lastPlayer % 2 === 0 ? 0 : 1;
       room.teamScores[winnerTeam] += score;
@@ -596,6 +593,7 @@ function startGame(room) {
   room.passCount = 0;
   room.teamScores = [0, 0];
   room.firstFinishedTeam = null;
+  room.pendingLightBorrow = undefined; // 借光待处理标记
   room.messages = ['游戏开始！'];
   room.gameState = 'playing';
   
@@ -697,6 +695,8 @@ function checkBotTurn(room) {
       
       if (room.hands[botIndex].length === 0) {
         room.messages.push(`✨ ${currentPlayer.name}出完牌了！`);
+        // 设置借光待处理标记（只触发一次）
+        room.pendingLightBorrow = botIndex;
         // 出完牌的玩家不再参与，但该轮还要继续，让其他玩家按顺序出牌/过
         room.currentPlayer = (botIndex + 1) % room.players.length;
         while (room.hands[room.currentPlayer] && room.hands[room.currentPlayer].length === 0) {
@@ -720,16 +720,11 @@ function checkBotTurn(room) {
       room.messages.push(`✋ ${currentPlayer.name}过`);
       console.log(`✋ ${currentPlayer.name}过`);
       
-      // 检查是否有人刚出完牌（且这轮还没触发过借光）
-      const finishedPlayerIndex = room.hands.findIndex((h, i) => h.length === 0);
-      const hasFinishedPlayer = finishedPlayerIndex !== -1;
-      // 如果桌上没牌且 passCount 刚重置，说明已经借光过了，不要再触发
-      const alreadyBorrowedLight = room.tableCards.length === 0 && room.passCount === 1;
-      
       if (room.passCount >= room.players.length - 1) {
-        // 所有人都过了，检查是否有玩家刚出完牌且还没触发借光
-        if (hasFinishedPlayer && !alreadyBorrowedLight) {
+        // 所有人都过了，检查是否有待处理的借光
+        if (room.pendingLightBorrow !== undefined) {
           // 触发借光规则
+          const finishedPlayerIndex = room.pendingLightBorrow;
           const finishedTeam = finishedPlayerIndex % 2;
           let nextTeammate = (finishedPlayerIndex + 1) % room.players.length;
           let foundTeammate = -1;
@@ -747,11 +742,8 @@ function checkBotTurn(room) {
             room.tableCards = [];
             room.lastPlayedCards = [];
             room.passCount = 0;
-            // 只在没有借光消息时才添加（避免重复）
-            const lastMsg = room.messages[room.messages.length - 1];
-            if (!lastMsg || !lastMsg.includes('借光')) {
-              room.messages.push(`✨ 借光！${room.players[foundTeammate].name}获得出牌权`);
-            }
+            room.pendingLightBorrow = undefined; // 清除标记，防止重复触发
+            room.messages.push(`✨ 借光！${room.players[foundTeammate].name}获得出牌权`);
             
             const team0Finished = room.hands.some((h, i) => i % 2 === 0 && h.length === 0);
             const team1Finished = room.hands.some((h, i) => i % 2 === 1 && h.length === 0);
@@ -777,6 +769,9 @@ function checkBotTurn(room) {
         }
         
         // 没有触发借光，按正常流程
+        // 清除借光标记（因为一轮已经结束了）
+        room.pendingLightBorrow = undefined;
+        
         const score = calculateTableScore(room.tableCards);
         const winnerTeam = room.lastPlayer % 2 === 0 ? 0 : 1;
         room.teamScores[winnerTeam] += score;

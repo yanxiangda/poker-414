@@ -484,7 +484,42 @@ export default function App() {
                   justifyContent: 'space-between',
                   alignItems: 'center'
                 }}>
-                  <span>{player.name} {i === playerIndex && '(你)'}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {/* 头像 */}
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      backgroundColor: player.ready ? '#FFD700' : (player.team === 0 ? '#4CAF50' : '#f44336'),
+                      border: `2px solid ${player.team === 0 ? '#4CAF50' : '#f44336'}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '20px',
+                      position: 'relative'
+                    }}>
+                      {player.isBot ? '🤖' : '🧑'}
+                      {player.ready && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '-2px',
+                          right: '-2px',
+                          width: '16px',
+                          height: '16px',
+                          backgroundColor: '#4CAF50',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '10px',
+                          color: 'white'
+                        }}>
+                          ✅
+                        </div>
+                      )}
+                    </div>
+                    <span>{player.name} {i === playerIndex && '(你)'}</span>
+                  </div>
                   <span style={{ 
                     padding: '2px 8px', 
                     backgroundColor: player.team === 0 ? '#4CAF50' : '#f44336',
@@ -494,7 +529,6 @@ export default function App() {
                   }}>
                     {player.team === 0 ? 'A 队' : 'B 队'}
                   </span>
-                  {player.ready && <span>✅</span>}
                 </div>
               ))}
             </div>

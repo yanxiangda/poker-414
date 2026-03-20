@@ -233,7 +233,26 @@ io.on('connection', (socket) => {
     if (player) {
       player.ready = !player.ready; // 切换状态
       io.to(playerInfo.roomId).emit('playerReady', room.toGameState());
-      // 不自动开始，等待房主点击开始游戏
+      
+      // 检查是否所有玩家都准备了
+      const allReady = room.players.every(p => p.ready);
+      if (allReady && room.players.length >= 1) {
+        console.log(`🎮 所有玩家已准备，自动开始游戏：${room.id}`);
+        // 自动添加机器人到 6 人
+        const botNames = ['机器人 1 号', '机器人 2 号', '机器人 3 号', '机器人 4 号', '机器人 5 号', '机器人 6 号'];
+        while (room.players.length < room.maxPlayers) {
+          const existingBots = room.getBots().length;
+          const botName = botNames[existingBots] || `机器人${existingBots + 1}号`;
+          room.addBot(botName);
+          console.log(`🤖 自动添加机器人：${botName} 到房间 ${room.id}`);
+        }
+        // 通知所有客户端机器人已加入
+        io.to(room.id).emit('playerJoined', room.toGameState());
+        // 延迟一点开始游戏，让玩家看到机器人加入
+        setTimeout(() => {
+          startGame(room);
+        }, 500);
+      }
     }
   });
 

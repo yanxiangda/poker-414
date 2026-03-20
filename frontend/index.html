@@ -7,9 +7,14 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>东北抛幺 414 - 多人联机</title>
     <style>
-      * { -webkit-tap-highlight-color: transparent; }
-      body { overflow-y: auto; touch-action: pan-y pinch-zoom; }
-      html { overflow-y: auto; }
+      * { -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+      html, body { 
+        width: 100%;
+        min-height: 100%;
+        overflow-y: auto; 
+        touch-action: pan-y pinch-zoom;
+        background: linear-gradient(180deg, #1a4d8f 0%, #0d2847 50%, #1a4d8f 100%);
+      }
       @media (max-width: 768px) {
         html { font-size: 14px; }
         button { font-size: 16px !important; }
